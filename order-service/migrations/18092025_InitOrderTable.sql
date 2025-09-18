@@ -1,3 +1,4 @@
+-- +goose Up
 create table if not exists orders (
     id bigserial not null primary key,
     customer_id bigint not null,
@@ -47,3 +48,9 @@ create type v1_order_item as (
     created_at timestamp with time zone,
     updated_at timestamp with time zone
 );
+
+-- +goose Down
+drop table if exists order_items;
+drop table if exists orders;
+drop type if exists v1_order_item;
+drop type if exists v1_order;
