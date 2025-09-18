@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:17.6
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOST_AUTH_METHOD=md5
+      - POSTGRES_INITDB_ARGS=--auth=md5
+    networks:
+      - backend-labs-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+      # - ./initdb.d:/docker-entrypoint-initdb.d
+  
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.24.1-p1
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=user
+      - DB_PASSWORD=mypassword
+      - ADMIN_USERS=postgres,admin
+    networks:
+      - backend-labs-network
+    ports:
+      - "15432:5432"
+
+networks:
+  backend-labs-network:
+    driver: bridge
+  
+volumes:
+  pgdata:
