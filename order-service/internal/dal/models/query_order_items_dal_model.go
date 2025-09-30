@@ -1,8 +1,8 @@
 package models
 
 type QueryOrderItemsDalModel struct {
-	Ids      []int64
-	OrderIds []int64
+	IDs      []int64
+	OrderIDs []int64
 	Limit    int
 	Offset   int
 }
