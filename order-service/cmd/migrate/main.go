@@ -35,4 +35,3 @@ func main() {
 	}
 	fmt.Println("Migrations applied successfully")
 }
-

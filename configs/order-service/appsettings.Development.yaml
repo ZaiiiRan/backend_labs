@@ -1,0 +1,6 @@
+DbSettings:
+  MigrationConnectionString: postgres://user:mypassword@pgbouncer:5432/postgres?sslmode=disable
+  ConnectionString: postgres://user:mypassword@pgbouncer:5432/postgres?sslmode=disable
+
+Http:
+  Port: 5000

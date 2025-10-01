@@ -13,7 +13,6 @@ type DbSettings struct {
 }
 
 type HttpSettings struct {
-	Host string `mapstructure:"Host"`
 	Port int    `mapstructure:"Port"`
 }
 
