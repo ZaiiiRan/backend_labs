@@ -31,12 +31,17 @@ services:
     build:
       context: ./order-service
       dockerfile: Dockerfile
+    environment:
+      - RUN_MIGRATIONS=true
+      - APP_ENVIRONMENT=Development
     volumes:
       - ./configs/order-service:/etc/order-service
     ports:
       - "5000:5000"
     depends_on:
       - order-pgbouncer
+    networks:
+      - backend-labs-network
 
 networks:
   backend-labs-network:
