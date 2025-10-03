@@ -24,10 +24,6 @@ func (r *OrderItemRepository) BulkInsert(ctx context.Context, items []models.V1O
 		return nil, err
 	}
 
-	if _, err := conn.Conn().LoadType(ctx, "v1_order_item"); err != nil {
-		return nil, fmt.Errorf("load type v1_order_item: %w", err)
-	}
-
 	sql := `
 		insert into order_items (
 			order_id,
@@ -41,16 +37,16 @@ func (r *OrderItemRepository) BulkInsert(ctx context.Context, items []models.V1O
 			updated_at
 		)
 		select
-			order_id,
-			product_id,
-			quantity,
-			product_title,
-			product_url,
-			price_cents,
-			price_currency,
-			created_at,
-			updated_at
-		from unnest($1::v1_order_item[])
+			(i).order_id,
+			(i).product_id,
+			(i).quantity,
+			(i).product_title,
+			(i).product_url,
+			(i).price_cents,
+			(i).price_currency,
+			(i).created_at,
+			(i).updated_at
+		from unnest($1::v1_order_item[]) as i
 		returning
 			id,
 			order_id,

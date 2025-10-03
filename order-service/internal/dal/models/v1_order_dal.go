@@ -11,3 +11,25 @@ type V1OrderDal struct {
 	CreatedAt       time.Time `db:"created_at"`
 	UpdatedAt       time.Time `db:"updated_at"`
 }
+
+func (o V1OrderDal) IsNull() bool { return false }
+func (o V1OrderDal) Index(i int) any {
+	switch i {
+	case 0:
+		return o.ID
+	case 1:
+		return o.CustomerID
+	case 2:
+		return o.DeliveryAddress
+	case 3:
+		return o.TotalPriceCents
+	case 4:
+		return o.TotalPriceCurr
+	case 5:
+		return o.CreatedAt
+	case 6:
+		return o.UpdatedAt
+	default:
+		return nil
+	}
+}

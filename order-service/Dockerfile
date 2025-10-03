@@ -20,19 +20,21 @@ COPY --from=builder /app/migrate .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/docs ./docs
 
-ENV RUN_MIGRATIONS=false
+# COPY <<EOF /entrypoint.sh
+# #!/bin/sh
+# set -e
 
-COPY <<EOF /entrypoint.sh
-#!/bin/sh
-set -e
+# echo "RUN_MIGRATIONS='$$RUN_MIGRATIONS'"
 
-if [ "/$RUN_MIGRATIONS" = "true" ]; then
-    ./migrate
-fi
+# if [ "$$RUN_MIGRATIONS" = "true" ]; then
+#     echo "Running migrations..."
+#     ./migrate
+# fi
 
-exec ./server
-EOF
+# echo "Starting server..."
+# exec ./server
+# EOF
 
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+# RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./server"]

@@ -25,8 +25,8 @@ func BllOrderToDal(o bll.OrderUnit) dal.V1OrderDal {
 		DeliveryAddress: o.DeliveryAddress,
 		TotalPriceCents: o.TotalPriceCents,
 		TotalPriceCurr:  o.TotalPriceCurr,
-		CreatedAt:       o.CreatedAt,
-		UpdatedAt:       o.UpdatedAt,
+		CreatedAt:       o.CreatedAt.UTC(),
+		UpdatedAt:       o.UpdatedAt.UTC(),
 	}
 }
 

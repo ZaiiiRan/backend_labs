@@ -32,8 +32,9 @@ services:
       context: ./order-service
       dockerfile: Dockerfile
     environment:
-      - RUN_MIGRATIONS=true
-      - APP_ENVIRONMENT=Development
+      # RUN_MIGRATIONS: "true"
+      APP_ENVIRONMENT: "Development"
+    # entrypoint: ["./migrate"]
     volumes:
       - ./configs/order-service:/etc/order-service
     ports:

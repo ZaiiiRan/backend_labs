@@ -30,7 +30,7 @@ func BllOrderItemToDal(i bll.OrderItemUnit, orderID int64) dal.V1OrderItemDal {
 		ProductURL:   i.ProductURL,
 		PriceCents:   i.PriceCents,
 		PriceCurr:    i.PriceCurr,
-		CreatedAt:    i.CreatedAt,
-		UpdatedAt:    i.UpdatedAt,
+		CreatedAt:    i.CreatedAt.UTC(),
+		UpdatedAt:    i.UpdatedAt.UTC(),
 	}
 }

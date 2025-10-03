@@ -88,7 +88,7 @@ func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsM
 		IDs:         query.IDs,
 		CustomerIDs: query.CustomerIDs,
 		Limit:       query.PageSize,
-		Offset:      query.PageSize * (query.Page - 1) * query.PageSize,
+		Offset:      query.PageSize * (query.Page - 1),
 	})
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsM
 
 	var items []dal.V1OrderItemDal
 	if query.IncludeOrderItems {
-		ordersIDs := make([]int64, 0, len(orders))
+		ordersIDs := make([]int64, len(orders))
 		for i, o := range orders {
 			ordersIDs[i] = o.ID
 		}
