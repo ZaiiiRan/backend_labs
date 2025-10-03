@@ -38,7 +38,7 @@ func (u *UnitOfWork) GetConn(ctx context.Context) (*pgxpool.Conn, error) {
 	return u.conn, nil
 }
 
-func (u *UnitOfWork) BeginTx(ctx context.Context) (pgx.Tx, error) {
+func (u *UnitOfWork) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
@@ -48,6 +48,7 @@ func (u *UnitOfWork) BeginTx(ctx context.Context) (pgx.Tx, error) {
 	if u.tx != nil {
 		return u.tx, nil
 	}
+
 	if u.conn == nil {
 		c, err := u.pool.Acquire(ctx)
 		if err != nil {
@@ -55,6 +56,7 @@ func (u *UnitOfWork) BeginTx(ctx context.Context) (pgx.Tx, error) {
 		}
 		u.conn = c
 	}
+
 	tx, err := u.conn.Begin(ctx)
 	if err != nil {
 		return nil, err
