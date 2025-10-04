@@ -7,16 +7,19 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
+	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
+	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrderController struct {
-	orderService *services.OrderService
+	pool *pgxpool.Pool
 }
 
-func NewOrderController(orderService *services.OrderService) *OrderController {
-	return &OrderController{orderService: orderService}
+func NewOrderController(pool *pgxpool.Pool) *OrderController {
+	return &OrderController{pool: pool}
 }
 
 // BatchCreate godoc
@@ -43,16 +46,18 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errs := validators.ValidateV1CreateOrderRequest(&req); errs != nil {
-		writeJSON(w, http.StatusBadRequest, errs)
+		c.writeJSON(w, http.StatusBadRequest, errs)
 		return
 	}
+	
 
 	var orders []models.OrderUnit
 	for _, o := range req.Orders {
 		orders = append(orders, mappers.DtoOrderToBll(o))
 	}
 
-	result, err := c.orderService.BatchInsert(r.Context(), orders)
+	orderService := c.createOrderService()
+	result, err := orderService.BatchInsert(r.Context(), orders)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -63,7 +68,7 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 		resp.Orders = append(resp.Orders, mappers.BllOrderToDto(o))
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	c.writeJSON(w, http.StatusOK, resp)
 }
 
 // QueryOrders godoc
@@ -90,11 +95,12 @@ func (c *OrderController) QueryOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errs := validators.ValidateV1QueryOrdersRequest(req); errs != nil {
-		writeJSON(w, http.StatusBadRequest, errs)
+		c.writeJSON(w, http.StatusBadRequest, errs)
 		return
 	}
 
-	result, err := c.orderService.GetOrders(r.Context(), mappers.DtoQueryOrderItemsToBll(req))
+	orderService := c.createOrderService()
+	result, err := orderService.GetOrders(r.Context(), mappers.DtoQueryOrderItemsToBll(req))
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -105,11 +111,20 @@ func (c *OrderController) QueryOrders(w http.ResponseWriter, r *http.Request) {
 		resp.Orders = append(resp.Orders, mappers.BllOrderToDto(o))
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	c.writeJSON(w, http.StatusOK, resp)
 }
 
-func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+func (c *OrderController) writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(data)
+}
+
+func (c *OrderController) createOrderService() *services.OrderService {
+	uow := unitofwork.New(c.pool)
+	orderRepo := repositories.NewOrderRepository(uow)
+	orderItemRepo := repositories.NewOrderItemRepository(uow)
+
+	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo)
+	return orderService
 }

@@ -8,11 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
-	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
-	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	httpserver "github.com/ZaiiiRan/backend_labs/order-service/internal/server/http"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/http/controllers"
 )
@@ -38,12 +35,7 @@ func (a *App) Run() error {
 	}
 	defer pool.Close()
 
-	uow := unitofwork.New(pool)
-	orderRepo := repositories.NewOrderRepository(uow)
-	orderItemRepo := repositories.NewOrderItemRepository(uow)
-
-	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo)
-	orderController := controllers.NewOrderController(orderService)
+	orderController := controllers.NewOrderController(pool)
 
 	a.httpServer = httpserver.NewServer(a.cfg.Http.Port, orderController)
 
