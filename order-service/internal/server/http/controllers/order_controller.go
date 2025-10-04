@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
 )
 
@@ -40,26 +42,14 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if errs := validators.ValidateV1CreateOrderRequest(&req); errs != nil {
+		writeJSON(w, http.StatusBadRequest, errs)
+		return
+	}
+
 	var orders []models.OrderUnit
 	for _, o := range req.Orders {
-		var items []models.OrderItemUnit
-		for _, it := range o.OrderItems {
-			items = append(items, models.OrderItemUnit{
-				ProductID:    it.ProductID,
-				Quantity:     it.Quantity,
-				ProductTitle: it.ProductTitle,
-				ProductURL:   it.ProductURL,
-				PriceCents:   it.PriceCents,
-				PriceCurr:    it.PriceCurr,
-			})
-		}
-		orders = append(orders, models.OrderUnit{
-			CustomerID:      o.CustomerID,
-			DeliveryAddress: o.DeliveryAddress,
-			TotalPriceCents: o.TotalPriceCents,
-			TotalPriceCurr:  o.TotalPriceCurr,
-			OrderItems:      items,
-		})
+		orders = append(orders, mappers.DtoOrderToBll(o))
 	}
 
 	result, err := c.orderService.BatchInsert(r.Context(), orders)
@@ -70,31 +60,7 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 
 	var resp dto.V1CreateOrderResponse
 	for _, o := range result {
-		var items []dto.V1OrderItem
-		for _, it := range o.OrderItems {
-			items = append(items, dto.V1OrderItem{
-				ID:           it.ID,
-				OrderID:      it.OrderID,
-				ProductID:    it.ProductID,
-				Quantity:     it.Quantity,
-				ProductTitle: it.ProductTitle,
-				ProductURL:   it.ProductURL,
-				PriceCents:   it.PriceCents,
-				PriceCurr:    it.PriceCurr,
-				CreatedAt:    it.CreatedAt,
-				UpdatedAt:    it.UpdatedAt,
-			})
-		}
-		resp.Orders = append(resp.Orders, dto.V1Order{
-			ID:              o.ID,
-			CustomerID:      o.CustomerID,
-			DeliveryAddress: o.DeliveryAddress,
-			TotalPriceCents: o.TotalPriceCents,
-			TotalPriceCurr:  o.TotalPriceCurr,
-			CreatedAt:       o.CreatedAt,
-			UpdatedAt:       o.UpdatedAt,
-			OrderItems:      items,
-		})
+		resp.Orders = append(resp.Orders, mappers.BllOrderToDto(o))
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -123,13 +89,12 @@ func (c *OrderController) QueryOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := c.orderService.GetOrders(r.Context(), models.QueryOrderItemsModel{
-		IDs:               req.IDs,
-		CustomerIDs:       req.CustomerIDs,
-		Page:              req.Page,
-		PageSize:          req.PageSize,
-		IncludeOrderItems: req.IncludeOrderItems,
-	})
+	if errs := validators.ValidateV1QueryOrdersRequest(req); errs != nil {
+		writeJSON(w, http.StatusBadRequest, errs)
+		return
+	}
+
+	result, err := c.orderService.GetOrders(r.Context(), mappers.DtoQueryOrderItemsToBll(req))
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -137,31 +102,7 @@ func (c *OrderController) QueryOrders(w http.ResponseWriter, r *http.Request) {
 
 	var resp dto.V1QueryOrdersResponse
 	for _, o := range result {
-		var items []dto.V1OrderItem
-		for _, it := range o.OrderItems {
-			items = append(items, dto.V1OrderItem{
-				ID:           it.ID,
-				OrderID:      it.OrderID,
-				ProductID:    it.ProductID,
-				Quantity:     it.Quantity,
-				ProductTitle: it.ProductTitle,
-				ProductURL:   it.ProductURL,
-				PriceCents:   it.PriceCents,
-				PriceCurr:    it.PriceCurr,
-				CreatedAt:    it.CreatedAt,
-				UpdatedAt:    it.UpdatedAt,
-			})
-		}
-		resp.Orders = append(resp.Orders, dto.V1Order{
-			ID:              o.ID,
-			CustomerID:      o.CustomerID,
-			DeliveryAddress: o.DeliveryAddress,
-			TotalPriceCents: o.TotalPriceCents,
-			TotalPriceCurr:  o.TotalPriceCurr,
-			CreatedAt:       o.CreatedAt,
-			UpdatedAt:       o.UpdatedAt,
-			OrderItems:      items,
-		})
+		resp.Orders = append(resp.Orders, mappers.BllOrderToDto(o))
 	}
 
 	writeJSON(w, http.StatusOK, resp)
