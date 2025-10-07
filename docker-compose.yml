@@ -26,6 +26,14 @@ services:
       - backend-labs-network
     ports:
       - "15432:5432"
+    
+  order-rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - order-rabbitmq-data:/var/lib/rabbitmq
   
   order-service:
     build:
@@ -50,3 +58,4 @@ networks:
   
 volumes:
   order-db-data:
+  order-rabbitmq-data:

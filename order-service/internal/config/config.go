@@ -12,13 +12,22 @@ type DbSettings struct {
 	MigrationConnectionString string `mapstructure:"MigrationConnectionString"`
 }
 
+type RabbitMqSettings struct {
+	Host     string `mapstructure:"Host"`
+	Port     int    `mapstructure:"Port"`
+	User     string `mapstructure:"User"`
+	Password string `mapstructure:"Password"`
+	VHost    string `mapstructure:"VHost"`
+}
+
 type HttpSettings struct {
-	Port int    `mapstructure:"Port"`
+	Port int `mapstructure:"Port"`
 }
 
 type Config struct {
-	DbSettings DbSettings   `mapstructure:"DbSettings"`
-	Http       HttpSettings `mapstructure:"Http"`
+	DbSettings       DbSettings       `mapstructure:"DbSettings"`
+	RabbitMqSettings RabbitMqSettings `mapstructure:"RabbitMqSettings"`
+	Http             HttpSettings     `mapstructure:"Http"`
 }
 
 func Load() (*Config, error) {
