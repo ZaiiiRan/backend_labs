@@ -14,14 +14,14 @@ services:
   
   order-pgbouncer:
     image: edoburu/pgbouncer:v1.24.1-p1
+    depends_on:
+      - order-db
     environment:
       - DB_HOST=order-db
       - DB_PORT=5432
       - DB_USER=user
       - DB_PASSWORD=mypassword
       - ADMIN_USERS=postgres,admin
-    depends_on:
-      - order-db
     networks:
       - backend-labs-network
     ports:
@@ -44,17 +44,16 @@ services:
     build:
       context: ./order-service
       dockerfile: Dockerfile
-    
+    depends_on:
+      - order-pgbouncer
+      - order-rabbitmq
     environment:
-      # RUN_MIGRATIONS: "true"
       APP_ENVIRONMENT: "Development"
     # entrypoint: ["./migrate"]
     volumes:
       - ./configs/order-service:/etc/order-service
     ports:
       - "5000:5000"
-    depends_on:
-      - order-pgbouncer
     networks:
       - backend-labs-network
 

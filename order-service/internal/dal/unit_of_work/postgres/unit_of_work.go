@@ -4,20 +4,21 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UnitOfWork struct {
-	pool   *pgxpool.Pool
-	mu     sync.Mutex
-	conn   *pgxpool.Conn
-	tx     pgx.Tx
-	closed bool
+	pgClient *postgres.PostgresClient
+	mu       sync.Mutex
+	conn     *pgxpool.Conn
+	tx       pgx.Tx
+	closed   bool
 }
 
-func New(pool *pgxpool.Pool) *UnitOfWork {
-	return &UnitOfWork{pool: pool}
+func New(pgClient *postgres.PostgresClient) *UnitOfWork {
+	return &UnitOfWork{pgClient: pgClient}
 }
 
 func (u *UnitOfWork) GetConn(ctx context.Context) (*pgxpool.Conn, error) {
@@ -30,7 +31,7 @@ func (u *UnitOfWork) GetConn(ctx context.Context) (*pgxpool.Conn, error) {
 	if u.conn != nil {
 		return u.conn, nil
 	}
-	c, err := u.pool.Acquire(ctx)
+	c, err := u.pgClient.GetConn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (u *UnitOfWork) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
 	}
 
 	if u.conn == nil {
-		c, err := u.pool.Acquire(ctx)
+		c, err := u.pgClient.GetConn(ctx)
 		if err != nil {
 			return nil, err
 		}

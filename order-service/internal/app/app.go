@@ -2,21 +2,31 @@ package app
 
 import (
 	"context"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	"errors"
+	"net/http"
 	"time"
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
+	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/logger"
 	httpserver "github.com/ZaiiiRan/backend_labs/order-service/internal/server/http"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/http/controllers"
+	"go.uber.org/zap"
 )
 
 type App struct {
-	cfg        *config.Config
+	cfg *config.Config
+	log *zap.SugaredLogger
+
+	postgresClient *postgres.PostgresClient
+	rabbitmqClient *rabbitmq.RabbitMqClient
+
+	orderCreatedPublisher *publisher.Publisher
+
+	orderController *controllers.OrderController
+
 	httpServer *httpserver.Server
 }
 
@@ -25,47 +35,85 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &App{cfg: cfg}, nil
+
+	log, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	return &App{cfg: cfg, log: log}, nil
 }
 
-func (a *App) Run() error {
-	ctx := context.Background()
-	pool, err := postgres.NewPgxPool(ctx, a.cfg.DbSettings.ConnectionString)
-	if err != nil {
-		log.Fatalf("connect db: %v", err)
-	}
-	defer pool.Close()
-
-	publisher, err := rabbitmq.NewPublisher(&a.cfg.RabbitMqSettings)
-	if err != nil {
-		log.Fatalf("connect rabbitmq: %v", err)
-	}
-	defer publisher.Close()
-
-	orderController := controllers.NewOrderController(pool, publisher)
-
-	a.httpServer = httpserver.NewServer(a.cfg.Http.Port, orderController)
-
-	go func() {
-		log.Printf("HTTP server listening on %s", a.httpServer.Addr())
-		if err := a.httpServer.Start(); err != nil {
-			log.Printf("server error: %v", err)
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	if err := a.httpServer.Stop(ctx); err != nil {
+func (a *App) Run(ctx context.Context) error {
+	if err := a.initPostgresClient(ctx); err != nil {
 		return err
 	}
-
-	log.Println("Server exited properly")
+	if err := a.initRabbitMqClient(); err != nil {
+		return err
+	}
+	if err := a.initPublishers(); err != nil {
+		return err
+	}
+	a.initOrderController()
+	a.startHttpServer()
+	a.log.Infow("app.started")
 	return nil
+}
+
+func (a *App) Stop(ctx context.Context) {
+	a.log.Infow("app.stopping")
+
+	shCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	a.postgresClient.Close()
+	a.orderCreatedPublisher.Close()
+	a.rabbitmqClient.Close()
+	a.httpServer.Stop(shCtx)
+
+	a.log.Infow("app.stopped")
+}
+
+func (a *App) initPostgresClient(ctx context.Context) error {
+	pgClient, err := postgres.NewPostgresClient(ctx, a.cfg.DbSettings.ConnectionString)
+	if err != nil {
+		a.log.Errorw("app.postgres_connect_failed", "err", err)
+		return err
+	}
+	a.postgresClient = pgClient
+	return nil
+}
+
+func (a *App) initRabbitMqClient() error {
+	rabbitMqCient, err := rabbitmq.NewRabbitMqClient(&a.cfg.RabbitMqSettings)
+	if err != nil {
+		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
+	}
+	a.rabbitmqClient = rabbitMqCient
+	return nil
+}
+
+func (a *App) initPublishers() error {
+	orderCreatedPublisher, err := publisher.NewPublisher(a.rabbitmqClient, a.cfg.RabbitMqSettings.OrderCreatedQueue)
+	if err != nil {
+		a.log.Errorw("app.create_order_created_publisher_failed", "err", err)
+		return err
+	}
+	a.orderCreatedPublisher = orderCreatedPublisher
+	return nil
+}
+
+func (a *App) initOrderController() {
+	a.orderController = controllers.NewOrderController(a.postgresClient, a.orderCreatedPublisher, a.log)
+}
+
+func (a *App) startHttpServer() {
+	a.httpServer = httpserver.NewServer(a.cfg.Http.Port, a.orderController)
+
+	go func() {
+		a.log.Infow("app.http.serve_start", "port", a.cfg.Http.Port)
+		if err := a.httpServer.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.log.Errorw("app.http.serve_error", "err", err)
+		}
+	}()
 }

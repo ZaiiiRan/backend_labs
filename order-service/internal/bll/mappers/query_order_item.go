@@ -2,7 +2,7 @@ package mappers
 
 import (
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 )
 
 func DtoQueryOrderItemsToBll(q dto.V1QueryOrdersRequest) bll.QueryOrderItemsModel {

@@ -8,7 +8,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPgxPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+type PostgresClient struct {
+	pool *pgxpool.Pool
+}
+
+func NewPostgresClient(ctx context.Context, connString string) (*PostgresClient, error) {
 	cfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
@@ -33,5 +37,15 @@ func NewPgxPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
 
-	return pool, nil
+	return &PostgresClient{pool: pool}, nil
+}
+
+func (p *PostgresClient) GetConn(ctx context.Context) (*pgxpool.Conn, error) {
+	return p.pool.Acquire(ctx)
+}
+
+func (p *PostgresClient) Close() {
+	if p.pool != nil {
+		p.pool.Close()
+	}
 }

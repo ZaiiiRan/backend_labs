@@ -8,36 +8,48 @@ import (
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/interfaces"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
+	"go.uber.org/zap"
 )
 
 type OrderService struct {
-	uow           *unitofwork.UnitOfWork
-	orderRepo     interfaces.OrderRepository
-	orderItemRepo interfaces.OrderItemRepository
-	publisher     *rabbitmq.Publisher
+	uow                   *unitofwork.UnitOfWork
+	orderRepo             interfaces.OrderRepository
+	orderItemRepo         interfaces.OrderItemRepository
+	orderCreatedPublisher *publisher.Publisher
+	log                   *zap.SugaredLogger
 }
 
-func NewOrderService(uow *unitofwork.UnitOfWork, orderRepo interfaces.OrderRepository, orderItemRepo interfaces.OrderItemRepository, publisher *rabbitmq.Publisher) *OrderService {
+func NewOrderService(
+	uow *unitofwork.UnitOfWork,
+	orderRepo interfaces.OrderRepository,
+	orderItemRepo interfaces.OrderItemRepository,
+	orderCreatedPublisher *publisher.Publisher,
+	log *zap.SugaredLogger,
+) *OrderService {
 	return &OrderService{
-		uow:           uow,
-		orderRepo:     orderRepo,
-		orderItemRepo: orderItemRepo,
-		publisher:     publisher,
+		uow:                   uow,
+		orderRepo:             orderRepo,
+		orderItemRepo:         orderItemRepo,
+		orderCreatedPublisher: orderCreatedPublisher,
+		log:                   log,
 	}
 }
 
 func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) ([]bll.OrderUnit, error) {
 	now := time.Now().UTC()
+	s.log.Infow("order_service.batch_insert_start", "orders_count", len(orders))
 
 	_, err := s.uow.BeginTransaction(ctx)
 	if err != nil {
+		s.log.Errorw("order_service.begin_transaction_failed", "err", err)
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			s.uow.Rollback(ctx)
+			s.log.Warnw("transaction rolled back", "err", err)
 		}
 	}()
 
@@ -51,6 +63,7 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 
 	insertedOrders, err := s.orderRepo.BulkInsert(ctx, dalOrders)
 	if err != nil {
+		s.log.Errorw("order_service.bulk_insert_orders_failed", "err", err)
 		return nil, err
 	}
 
@@ -66,10 +79,12 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 
 	insertedItems, err := s.orderItemRepo.BulkInsert(ctx, dalItems)
 	if err != nil {
+		s.log.Errorw("order_service.bulk_insert_order_items_failed", "err", err)
 		return nil, err
 	}
 
 	if err := s.uow.Commit(ctx); err != nil {
+		s.log.Errorw("order_service.commit_transaction_failed", "err", err)
 		return nil, err
 	}
 
@@ -88,14 +103,18 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 		msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
 	}
 
-	if err := s.publisher.PublishBatch(ctx, s.publisher.QueueOrderCreated(), msgs); err != nil {
+	if err := s.orderCreatedPublisher.PublishBatch(ctx, msgs); err != nil {
+		s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err)
 		return nil, err
 	}
 
+	s.log.Infow("order_service.batch_insert_success", "inserted_orders_count", len(result))
 	return result, nil
 }
 
 func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsModel) ([]bll.OrderUnit, error) {
+	s.log.Infow("order_service.get_orders_start", "query", query)
+
 	orders, err := s.orderRepo.Query(ctx, dal.QueryOrdersDalModel{
 		IDs:         query.IDs,
 		CustomerIDs: query.CustomerIDs,
@@ -103,9 +122,11 @@ func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsM
 		Offset:      query.PageSize * (query.Page - 1),
 	})
 	if err != nil {
+		s.log.Errorw("order_service.query_orders_failed", "err", err)
 		return nil, err
 	}
 	if len(orders) == 0 {
+		s.log.Infow("order_service.get_orders_success", "returned_orders_count", 0)
 		return []bll.OrderUnit{}, nil
 	}
 
@@ -131,5 +152,10 @@ func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsM
 		result = append(result, mappers.DalOrderToBll(o, itemLookup[o.ID]))
 	}
 
+	s.log.Infow("order_service.get_orders_success", "returned_orders_count", len(result))
 	return result, nil
+}
+
+func (s *OrderService) UnitOfWork() *unitofwork.UnitOfWork {
+	return s.uow
 }

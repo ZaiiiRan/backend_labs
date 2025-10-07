@@ -1,6 +1,6 @@
 package validators
 
-import "github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+import "github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 
 func ValidateV1QueryOrdersRequest(req dto.V1QueryOrdersRequest) ValidationErrors {
 	errs := make(map[string]string)

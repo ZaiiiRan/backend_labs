@@ -3,7 +3,7 @@ package validators
 import (
 	"fmt"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 )
 
 func ValidateV1CreateOrderRequest(req *dto.V1CreateOrderRequest) ValidationErrors {

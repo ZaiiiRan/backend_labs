@@ -7,21 +7,23 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
+	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
+	"go.uber.org/zap"
 )
 
 type OrderController struct {
-	pool      *pgxpool.Pool
-	publisher *rabbitmq.Publisher
+	log                   *zap.SugaredLogger
+	pgClient              *postgres.PostgresClient
+	orderCreatedPublisher *publisher.Publisher
 }
 
-func NewOrderController(pool *pgxpool.Pool, publisher *rabbitmq.Publisher) *OrderController {
-	return &OrderController{pool: pool, publisher: publisher}
+func NewOrderController(pgClient *postgres.PostgresClient, orderCreatedPublisher *publisher.Publisher, log *zap.SugaredLogger) *OrderController {
+	return &OrderController{pgClient: pgClient, orderCreatedPublisher: orderCreatedPublisher, log: log}
 }
 
 // BatchCreate godoc
@@ -36,18 +38,24 @@ func NewOrderController(pool *pgxpool.Pool, publisher *rabbitmq.Publisher) *Orde
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/order/batch-create [post]
 func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
+	l := c.log.With("op", "batch_create")
+	l.Infow("order_controller.batch_create_start")
+
 	if r.Method != http.MethodPost {
+		l.Warnw("order_controller.batch_create_failed", "err", "Method not allowed", "method", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req dto.V1CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		l.Errorw("order_controller.batch_create_failed", "err", err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if errs := validators.ValidateV1CreateOrderRequest(&req); errs != nil {
+		l.Errorw("order_controller.request_validation_failed", "err", errs)
 		c.writeJSON(w, http.StatusBadRequest, errs)
 		return
 	}
@@ -57,12 +65,17 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 		orders = append(orders, mappers.DtoOrderToBll(o))
 	}
 
-	orderService := c.createOrderService()
+	orderService := c.createOrderService(l)
+	defer orderService.UnitOfWork().Close()
+
 	result, err := orderService.BatchInsert(r.Context(), orders)
 	if err != nil {
+		l.Errorw("order_controller.batch_insert_failed", "err", "Internal server error")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	l.Infow("order_controller.batch_create_success")
 
 	var resp dto.V1CreateOrderResponse
 	for _, o := range result {
@@ -84,28 +97,39 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/order/query [post]
 func (c *OrderController) QueryOrders(w http.ResponseWriter, r *http.Request) {
+	l := c.log.With("op", "query_orders")
+	l.Infow("order_controller.query_orders_start")
+
 	if r.Method != http.MethodPost {
+		l.Warnw("order_controller.query_orders_failed", "err", "Method not allowed", "method", r.Method)
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req dto.V1QueryOrdersRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		l.Errorw("order_controller.query_orders_failed", "err", err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if errs := validators.ValidateV1QueryOrdersRequest(req); errs != nil {
+		l.Errorw("order_controller.request_validation_failed", "err", errs)
 		c.writeJSON(w, http.StatusBadRequest, errs)
 		return
 	}
 
-	orderService := c.createOrderService()
+	orderService := c.createOrderService(l)
+	defer orderService.UnitOfWork().Close()
+
 	result, err := orderService.GetOrders(r.Context(), mappers.DtoQueryOrderItemsToBll(req))
 	if err != nil {
+		l.Errorw("order_controller.get_orders_failed", "err", "Internal server error")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	l.Infow("order_controller.query_orders_success")
 
 	var resp dto.V1QueryOrdersResponse
 	for _, o := range result {
@@ -121,11 +145,11 @@ func (c *OrderController) writeJSON(w http.ResponseWriter, status int, data inte
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-func (c *OrderController) createOrderService() *services.OrderService {
-	uow := unitofwork.New(c.pool)
+func (c *OrderController) createOrderService(log *zap.SugaredLogger) *services.OrderService {
+	uow := unitofwork.New(c.pgClient)
 	orderRepo := repositories.NewOrderRepository(uow)
 	orderItemRepo := repositories.NewOrderItemRepository(uow)
 
-	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo, c.publisher)
+	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo, c.orderCreatedPublisher, log)
 	return orderService
 }

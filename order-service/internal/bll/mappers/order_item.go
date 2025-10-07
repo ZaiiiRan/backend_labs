@@ -3,7 +3,7 @@ package mappers
 import (
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 )
 
