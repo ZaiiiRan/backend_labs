@@ -5,8 +5,9 @@ DbSettings:
 RabbitMqSettings:
   Host: order-rabbitmq
   Port: 5672
-  User: quest
-  Password: quest
+  User: user
+  Password: mypassword
+  OrderCreatedQueue: oms.order.created
 
 Http:
   Port: 5000

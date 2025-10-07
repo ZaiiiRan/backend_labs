@@ -10,6 +10,7 @@ import (
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	httpserver "github.com/ZaiiiRan/backend_labs/order-service/internal/server/http"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/http/controllers"
 )
@@ -35,7 +36,13 @@ func (a *App) Run() error {
 	}
 	defer pool.Close()
 
-	orderController := controllers.NewOrderController(pool)
+	publisher, err := rabbitmq.NewPublisher(&a.cfg.RabbitMqSettings)
+	if err != nil {
+		log.Fatalf("connect rabbitmq: %v", err)
+	}
+	defer publisher.Close()
+
+	orderController := controllers.NewOrderController(pool, publisher)
 
 	a.httpServer = httpserver.NewServer(a.cfg.Http.Port, orderController)
 

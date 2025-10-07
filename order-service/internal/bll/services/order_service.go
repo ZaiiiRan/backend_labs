@@ -8,6 +8,7 @@ import (
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/interfaces"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 )
 
@@ -15,13 +16,15 @@ type OrderService struct {
 	uow           *unitofwork.UnitOfWork
 	orderRepo     interfaces.OrderRepository
 	orderItemRepo interfaces.OrderItemRepository
+	publisher     *rabbitmq.Publisher
 }
 
-func NewOrderService(uow *unitofwork.UnitOfWork, orderRepo interfaces.OrderRepository, orderItemRepo interfaces.OrderItemRepository) *OrderService {
+func NewOrderService(uow *unitofwork.UnitOfWork, orderRepo interfaces.OrderRepository, orderItemRepo interfaces.OrderItemRepository, publisher *rabbitmq.Publisher) *OrderService {
 	return &OrderService{
 		uow:           uow,
 		orderRepo:     orderRepo,
 		orderItemRepo: orderItemRepo,
+		publisher:     publisher,
 	}
 }
 
@@ -78,6 +81,15 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 	var result []bll.OrderUnit
 	for _, o := range insertedOrders {
 		result = append(result, mappers.DalOrderToBll(o, itemLookup[o.ID]))
+	}
+
+	var msgs []any
+	for _, o := range result {
+		msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
+	}
+
+	if err := s.publisher.PublishBatch(ctx, s.publisher.QueueOrderCreated(), msgs); err != nil {
+		return nil, err
 	}
 
 	return result, nil

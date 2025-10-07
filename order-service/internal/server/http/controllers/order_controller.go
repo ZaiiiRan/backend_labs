@@ -7,6 +7,7 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
@@ -15,11 +16,12 @@ import (
 )
 
 type OrderController struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	publisher *rabbitmq.Publisher
 }
 
-func NewOrderController(pool *pgxpool.Pool) *OrderController {
-	return &OrderController{pool: pool}
+func NewOrderController(pool *pgxpool.Pool, publisher *rabbitmq.Publisher) *OrderController {
+	return &OrderController{pool: pool, publisher: publisher}
 }
 
 // BatchCreate godoc
@@ -49,7 +51,6 @@ func (c *OrderController) BatchCreate(w http.ResponseWriter, r *http.Request) {
 		c.writeJSON(w, http.StatusBadRequest, errs)
 		return
 	}
-	
 
 	var orders []models.OrderUnit
 	for _, o := range req.Orders {
@@ -125,6 +126,6 @@ func (c *OrderController) createOrderService() *services.OrderService {
 	orderRepo := repositories.NewOrderRepository(uow)
 	orderItemRepo := repositories.NewOrderItemRepository(uow)
 
-	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo)
+	orderService := services.NewOrderService(uow, orderRepo, orderItemRepo, c.publisher)
 	return orderService
 }
