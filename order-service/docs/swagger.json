@@ -214,25 +214,25 @@
         "dto.V1LogOrder": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "customerId": {
+                "customer_id": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "orderId": {
+                "order_id": {
                     "type": "integer"
                 },
-                "orderItemId": {
+                "order_item_id": {
                     "type": "integer"
                 },
-                "orderStatus": {
+                "order_status": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -240,31 +240,31 @@
         "dto.V1Order": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "customerId": {
+                "customer_id": {
                     "type": "integer"
                 },
-                "deliveryAddress": {
+                "delivery_address": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "orderItems": {
+                "order_items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.V1OrderItem"
                     }
                 },
-                "totalPriceCents": {
+                "total_price_cents": {
                     "type": "integer"
                 },
-                "totalPriceCurrency": {
+                "total_price_currency": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -272,34 +272,34 @@
         "dto.V1OrderItem": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "orderId": {
+                "order_id": {
                     "type": "integer"
                 },
-                "priceCents": {
+                "price_cents": {
                     "type": "integer"
                 },
-                "priceCurrency": {
+                "price_currency": {
                     "type": "string"
                 },
-                "productId": {
+                "product_id": {
                     "type": "integer"
                 },
-                "productTitle": {
+                "product_title": {
                     "type": "string"
                 },
-                "productUrl": {
+                "product_url": {
                     "type": "string"
                 },
                 "quantity": {
                     "type": "integer"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -307,7 +307,7 @@
         "dto.V1QueryOrdersRequest": {
             "type": "object",
             "properties": {
-                "customerIds": {
+                "customer_ids": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -319,13 +319,13 @@
                         "type": "integer"
                     }
                 },
-                "includeOrderItems": {
+                "include_order_items": {
                     "type": "boolean"
                 },
                 "page": {
                     "type": "integer"
                 },
-                "pageSize": {
+                "page_size": {
                     "type": "integer"
                 }
             }

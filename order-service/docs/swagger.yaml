@@ -30,68 +30,68 @@ definitions:
     type: object
   dto.V1LogOrder:
     properties:
-      createdAt:
+      created_at:
         type: string
-      customerId:
+      customer_id:
         type: integer
       id:
         type: integer
-      orderId:
+      order_id:
         type: integer
-      orderItemId:
+      order_item_id:
         type: integer
-      orderStatus:
+      order_status:
         type: string
-      updatedAt:
+      updated_at:
         type: string
     type: object
   dto.V1Order:
     properties:
-      createdAt:
+      created_at:
         type: string
-      customerId:
+      customer_id:
         type: integer
-      deliveryAddress:
+      delivery_address:
         type: string
       id:
         type: integer
-      orderItems:
+      order_items:
         items:
           $ref: '#/definitions/dto.V1OrderItem'
         type: array
-      totalPriceCents:
+      total_price_cents:
         type: integer
-      totalPriceCurrency:
+      total_price_currency:
         type: string
-      updatedAt:
+      updated_at:
         type: string
     type: object
   dto.V1OrderItem:
     properties:
-      createdAt:
+      created_at:
         type: string
       id:
         type: integer
-      orderId:
+      order_id:
         type: integer
-      priceCents:
+      price_cents:
         type: integer
-      priceCurrency:
+      price_currency:
         type: string
-      productId:
+      product_id:
         type: integer
-      productTitle:
+      product_title:
         type: string
-      productUrl:
+      product_url:
         type: string
       quantity:
         type: integer
-      updatedAt:
+      updated_at:
         type: string
     type: object
   dto.V1QueryOrdersRequest:
     properties:
-      customerIds:
+      customer_ids:
         items:
           type: integer
         type: array
@@ -99,11 +99,11 @@ definitions:
         items:
           type: integer
         type: array
-      includeOrderItems:
+      include_order_items:
         type: boolean
       page:
         type: integer
-      pageSize:
+      page_size:
         type: integer
     type: object
   dto.V1QueryOrdersResponse:
