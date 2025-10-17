@@ -11,6 +11,12 @@ services:
       - backend-labs-network
     volumes:
       - order-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
   
   order-pgbouncer:
     image: edoburu/pgbouncer:v1.24.1-p1
@@ -26,6 +32,12 @@ services:
       - backend-labs-network
     ports:
       - "15432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U user || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     
   order-rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -39,14 +51,22 @@ services:
       - order-rabbitmq-data:/var/lib/rabbitmq
     networks:
       - backend-labs-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
   
   order-service:
     build:
       context: ./order-service
       dockerfile: Dockerfile
     depends_on:
-      - order-pgbouncer
-      - order-rabbitmq
+      order-pgbouncer:
+        condition: service_healthy
+      order-rabbitmq:
+        condition: service_healthy
     environment:
       APP_ENVIRONMENT: "Development"
     # entrypoint: ["./migrate"]
