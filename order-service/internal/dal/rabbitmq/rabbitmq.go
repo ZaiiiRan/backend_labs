@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
+	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

@@ -72,6 +72,7 @@ services:
     # entrypoint: ["./migrate"]
     volumes:
       - ./configs/order-service:/etc/order-service
+      - ./configs/order-service-consumer:/etc/order-service-consumer
     ports:
       - "5000:5000"
     networks:

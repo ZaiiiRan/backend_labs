@@ -9,5 +9,5 @@ RabbitMqSettings:
   Password: mypassword
   OrderCreatedQueue: oms.order.created
 
-Http:
+HttpServerSettings:
   Port: 5000

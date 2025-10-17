@@ -17,7 +17,7 @@ import (
 )
 
 type App struct {
-	cfg *config.Config
+	cfg *config.ServerConfig
 	log *zap.SugaredLogger
 
 	postgresClient *postgres.PostgresClient
@@ -31,7 +31,7 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	cfg, err := config.Load()
+	cfg, err := config.LoadServerConfig()
 	if err != nil {
 		return nil, err
 	}
