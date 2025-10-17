@@ -52,11 +52,10 @@ services:
     networks:
       - backend-labs-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+      test: rabbitmq-diagnostics -q ping
+      interval: 20s
+      timeout: 20s
+      retries: 3
   
   order-service:
     build:
@@ -72,9 +71,25 @@ services:
     # entrypoint: ["./migrate"]
     volumes:
       - ./configs/order-service:/etc/order-service
-      - ./configs/order-service-consumer:/etc/order-service-consumer
     ports:
       - "5000:5000"
+    networks:
+      - backend-labs-network
+
+  order-created-consumer:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    depends_on:
+      order-pgbouncer:
+        condition: service_healthy
+      order-rabbitmq:
+        condition: service_healthy
+    environment:
+      APP_ENVIRONMENT: "Development"
+    entrypoint: ["./consumer"]
+    volumes:
+      - ./configs/order-service-consumer:/etc/order-service-consumer
     networks:
       - backend-labs-network
 

@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type App struct {
+type OmsApp struct {
 	cfg *config.ServerConfig
 	log *zap.SugaredLogger
 
@@ -30,7 +30,7 @@ type App struct {
 	httpServer *httpserver.Server
 }
 
-func NewApp() (*App, error) {
+func NewOmsApp() (*OmsApp, error) {
 	cfg, err := config.LoadServerConfig()
 	if err != nil {
 		return nil, err
@@ -41,10 +41,10 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
-	return &App{cfg: cfg, log: log}, nil
+	return &OmsApp{cfg: cfg, log: log}, nil
 }
 
-func (a *App) Run(ctx context.Context) error {
+func (a *OmsApp) Run(ctx context.Context) error {
 	if err := a.initPostgresClient(ctx); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (a *App) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) Stop(ctx context.Context) {
+func (a *OmsApp) Stop(ctx context.Context) {
 	a.log.Infow("app.stopping")
 
 	shCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -74,7 +74,7 @@ func (a *App) Stop(ctx context.Context) {
 	a.log.Infow("app.stopped")
 }
 
-func (a *App) initPostgresClient(ctx context.Context) error {
+func (a *OmsApp) initPostgresClient(ctx context.Context) error {
 	pgClient, err := postgres.NewPostgresClient(ctx, a.cfg.DbSettings.ConnectionString)
 	if err != nil {
 		a.log.Errorw("app.postgres_connect_failed", "err", err)
@@ -84,16 +84,16 @@ func (a *App) initPostgresClient(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) initRabbitMqClient() error {
-	rabbitMqCient, err := rabbitmq.NewRabbitMqClient(&a.cfg.RabbitMqSettings)
+func (a *OmsApp) initRabbitMqClient() error {
+	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.RabbitMqSettings)
 	if err != nil {
 		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
 	}
-	a.rabbitmqClient = rabbitMqCient
+	a.rabbitmqClient = rabbitMqClient
 	return nil
 }
 
-func (a *App) initPublishers() error {
+func (a *OmsApp) initPublishers() error {
 	orderCreatedPublisher, err := publisher.NewPublisher(a.rabbitmqClient, a.cfg.RabbitMqSettings.OrderCreatedQueue)
 	if err != nil {
 		a.log.Errorw("app.create_order_created_publisher_failed", "err", err)
@@ -103,11 +103,11 @@ func (a *App) initPublishers() error {
 	return nil
 }
 
-func (a *App) initOrderController() {
+func (a *OmsApp) initOrderController() {
 	a.orderController = controllers.NewOrderController(a.postgresClient, a.orderCreatedPublisher, a.log)
 }
 
-func (a *App) startHttpServer() {
+func (a *OmsApp) startHttpServer() {
 	a.httpServer = httpserver.NewServer(a.cfg.Http.Port, a.orderController)
 
 	go func() {

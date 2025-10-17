@@ -19,6 +19,6 @@ create type v1_audit_log_order as (
     updated_at timestamp with time zone
 );
 
--- +gose Down
+-- +goose Down
 drop table if exists audit_log_order;
 drop type if exists v1_audit_log_order;

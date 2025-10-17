@@ -9,11 +9,11 @@ import (
 )
 
 type ConsumerConfig struct {
-	RabbitMqSettings settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
-	Http             settings.HttpClientSettings `mapstructure:"OmsHttpClient"`
+	RabbitMqSettings      settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
+	OmsClientHttpSettings settings.HttpClientSettings `mapstructure:"OmsHttpClient"`
 }
 
-func LoadConsumerConfig() (*ServerConfig, error) {
+func LoadConsumerConfig() (*ConsumerConfig, error) {
 	v := viper.New()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
@@ -32,7 +32,7 @@ func LoadConsumerConfig() (*ServerConfig, error) {
 		return nil, fmt.Errorf("read config: %w", err)
 	}
 
-	var cfg ServerConfig
+	var cfg ConsumerConfig
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}

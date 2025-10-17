@@ -9,6 +9,7 @@ COPY . .
 
 RUN go build -o server ./cmd/web-api/main.go
 RUN go build -o migrate ./cmd/migrate/main.go
+RUN go build -o consumer ./cmd/consumer/main.go
 
 FROM alpine:latest
 
@@ -16,6 +17,7 @@ WORKDIR /root
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrate .
+COPY --from=builder /app/consumer .
 
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/docs ./docs
