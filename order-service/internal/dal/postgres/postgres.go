@@ -19,7 +19,7 @@ func NewPostgresClient(ctx context.Context, connString string) (*PostgresClient,
 	}
 
 	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		names := []string{"v1_order", "_v1_order", "v1_order_item", "_v1_order_item"}
+		names := []string{"v1_order", "_v1_order", "v1_order_item", "_v1_order_item", "v1_audit_log_order", "_v1_audit_log_order"}
 		types, err := conn.LoadTypes(ctx, names)
 		if err != nil {
 			return fmt.Errorf("load types: %w", err)

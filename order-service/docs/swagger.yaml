@@ -1,5 +1,19 @@
 basePath: /
 definitions:
+  dto.V1CreateAuditLogOrderRequest:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.V1LogOrder'
+        type: array
+    type: object
+  dto.V1CreateAuditLogOrderResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.V1LogOrder'
+        type: array
+    type: object
   dto.V1CreateOrderRequest:
     properties:
       orders:
@@ -13,6 +27,23 @@ definitions:
         items:
           $ref: '#/definitions/dto.V1Order'
         type: array
+    type: object
+  dto.V1LogOrder:
+    properties:
+      createdAt:
+        type: string
+      customerId:
+        type: integer
+      id:
+        type: integer
+      orderId:
+        type: integer
+      orderItemId:
+        type: integer
+      orderStatus:
+        type: string
+      updatedAt:
+        type: string
     type: object
   dto.V1Order:
     properties:
@@ -89,6 +120,40 @@ info:
   title: Order Service API
   version: "1.0"
 paths:
+  /api/v1/audit-log/order/batch-create:
+    post:
+      consumes:
+      - application/json
+      description: Creates audit logs for orders
+      parameters:
+      - description: Create Audit Log Order Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.V1CreateAuditLogOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.V1CreateAuditLogOrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create audit logs for orders batch
+      tags:
+      - audit_logs
   /api/v1/order/batch-create:
     post:
       consumes:

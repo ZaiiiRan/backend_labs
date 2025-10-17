@@ -9,6 +9,58 @@
     "host": "localhost:5000",
     "basePath": "/",
     "paths": {
+        "/api/v1/audit-log/order/batch-create": {
+            "post": {
+                "description": "Creates audit logs for orders",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "audit_logs"
+                ],
+                "summary": "Create audit logs for orders batch",
+                "parameters": [
+                    {
+                        "description": "Create Audit Log Order Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.V1CreateAuditLogOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.V1CreateAuditLogOrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/order/batch-create": {
             "post": {
                 "description": "Creates orders with order items",
@@ -115,6 +167,28 @@
         }
     },
     "definitions": {
+        "dto.V1CreateAuditLogOrderRequest": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.V1LogOrder"
+                    }
+                }
+            }
+        },
+        "dto.V1CreateAuditLogOrderResponse": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.V1LogOrder"
+                    }
+                }
+            }
+        },
         "dto.V1CreateOrderRequest": {
             "type": "object",
             "properties": {
@@ -134,6 +208,32 @@
                     "items": {
                         "$ref": "#/definitions/dto.V1Order"
                     }
+                }
+            }
+        },
+        "dto.V1LogOrder": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "orderId": {
+                    "type": "integer"
+                },
+                "orderItemId": {
+                    "type": "integer"
+                },
+                "orderStatus": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },

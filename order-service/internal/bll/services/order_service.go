@@ -49,7 +49,7 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 	defer func() {
 		if err != nil {
 			s.uow.Rollback(ctx)
-			s.log.Warnw("transaction rolled back", "err", err)
+			s.log.Warnw("order_service.transaction_rollback", "err", err)
 		}
 	}()
 
