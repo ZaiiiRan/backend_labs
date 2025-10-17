@@ -98,15 +98,19 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 		result = append(result, mappers.DalOrderToBll(o, itemLookup[o.ID]))
 	}
 
-	var msgs []any
-	for _, o := range result {
-		msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
-	}
+	go func() {
+		var msgs []any
+		for _, o := range result {
+			msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
+		}
 
-	if err := s.orderCreatedPublisher.PublishBatch(ctx, msgs); err != nil {
-		s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err)
-		return nil, err
-	}
+		ctxPub, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.orderCreatedPublisher.PublishBatch(ctxPub, msgs); err != nil {
+			s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err, "lost_msgs", msgs)
+		}
+	}()
 
 	s.log.Infow("order_service.batch_insert_success", "inserted_orders_count", len(result))
 	return result, nil
