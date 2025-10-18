@@ -1,5 +1,19 @@
 basePath: /
 definitions:
+  dto.V1CreateAuditLogOrderRequest:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.V1LogOrder'
+        type: array
+    type: object
+  dto.V1CreateAuditLogOrderResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.V1LogOrder'
+        type: array
+    type: object
   dto.V1CreateOrderRequest:
     properties:
       orders:
@@ -14,53 +28,70 @@ definitions:
           $ref: '#/definitions/dto.V1Order'
         type: array
     type: object
+  dto.V1LogOrder:
+    properties:
+      created_at:
+        type: string
+      customer_id:
+        type: integer
+      id:
+        type: integer
+      order_id:
+        type: integer
+      order_item_id:
+        type: integer
+      order_status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   dto.V1Order:
     properties:
-      createdAt:
+      created_at:
         type: string
-      customerId:
+      customer_id:
         type: integer
-      deliveryAddress:
+      delivery_address:
         type: string
       id:
         type: integer
-      orderItems:
+      order_items:
         items:
           $ref: '#/definitions/dto.V1OrderItem'
         type: array
-      totalPriceCents:
+      total_price_cents:
         type: integer
-      totalPriceCurrency:
+      total_price_currency:
         type: string
-      updatedAt:
+      updated_at:
         type: string
     type: object
   dto.V1OrderItem:
     properties:
-      createdAt:
+      created_at:
         type: string
       id:
         type: integer
-      orderId:
+      order_id:
         type: integer
-      priceCents:
+      price_cents:
         type: integer
-      priceCurrency:
+      price_currency:
         type: string
-      productId:
+      product_id:
         type: integer
-      productTitle:
+      product_title:
         type: string
-      productUrl:
+      product_url:
         type: string
       quantity:
         type: integer
-      updatedAt:
+      updated_at:
         type: string
     type: object
   dto.V1QueryOrdersRequest:
     properties:
-      customerIds:
+      customer_ids:
         items:
           type: integer
         type: array
@@ -68,11 +99,11 @@ definitions:
         items:
           type: integer
         type: array
-      includeOrderItems:
+      include_order_items:
         type: boolean
       page:
         type: integer
-      pageSize:
+      page_size:
         type: integer
     type: object
   dto.V1QueryOrdersResponse:
@@ -89,6 +120,40 @@ info:
   title: Order Service API
   version: "1.0"
 paths:
+  /api/v1/audit-log/order/batch-create:
+    post:
+      consumes:
+      - application/json
+      description: Creates audit logs for orders
+      parameters:
+      - description: Create Audit Log Order Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.V1CreateAuditLogOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.V1CreateAuditLogOrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create audit logs for orders batch
+      tags:
+      - audit_logs
   /api/v1/order/batch-create:
     post:
       consumes:

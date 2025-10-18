@@ -1,8 +1,3 @@
-// @title Order Service API
-// @version 1.0
-// @description API for managing orders
-// @host localhost:5000
-// @BasePath /
 package main
 
 import (
@@ -16,7 +11,7 @@ import (
 )
 
 func main() {
-	a, err := app.NewOmsApp()
+	a, err := app.NewConsumerApp()
 	if err != nil {
 		log.Fatalf("init app: %v", err)
 	}
@@ -24,10 +19,10 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := a.Run(ctx); err != nil {
+	if err := a.Run(); err != nil {
 		os.Exit(1)
 	}
 
 	<-ctx.Done()
-	a.Stop(context.Background())
+	a.Stop()
 }

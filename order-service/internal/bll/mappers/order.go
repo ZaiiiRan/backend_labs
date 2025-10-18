@@ -3,7 +3,8 @@ package mappers
 import (
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 )
 
 func DalOrderToBll(o dal.V1OrderDal, items []bll.OrderItemUnit) bll.OrderUnit {
@@ -57,6 +58,24 @@ func BllOrderToDto(o bll.OrderUnit) dto.V1Order {
 
 	return dto.V1Order{
 		ID:              o.ID,
+		CustomerID:      o.CustomerID,
+		DeliveryAddress: o.DeliveryAddress,
+		TotalPriceCents: o.TotalPriceCents,
+		TotalPriceCurr:  o.TotalPriceCurr,
+		CreatedAt:       o.CreatedAt,
+		UpdatedAt:       o.UpdatedAt,
+		OrderItems:      items,
+	}
+}
+
+func BllOrderToOrderCreatedMessage(o bll.OrderUnit) messages.OrderCreatedMessage {
+	var items []messages.OrderCreatedItemMessage
+	for _, it := range o.OrderItems {
+		items = append(items, BllOrderItemToOrderCreatedItemMessage(it))
+	}
+
+	return messages.OrderCreatedMessage{
+		Id:              o.ID,
 		CustomerID:      o.CustomerID,
 		DeliveryAddress: o.DeliveryAddress,
 		TotalPriceCents: o.TotalPriceCents,

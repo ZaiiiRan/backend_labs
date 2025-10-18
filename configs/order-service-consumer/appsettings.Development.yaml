@@ -1,0 +1,9 @@
+RabbitMqSettings:
+  Host: order-rabbitmq
+  Port: 5672
+  User: user
+  Password: mypassword
+  OrderCreatedQueue: oms.order.created
+
+OmsHttpClient:
+  BaseAdress: http://order-service:5000

@@ -4,24 +4,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	"github.com/spf13/viper"
 )
 
-type DbSettings struct {
-	ConnectionString          string `mapstructure:"ConnectionString"`
-	MigrationConnectionString string `mapstructure:"MigrationConnectionString"`
+type ServerConfig struct {
+	DbSettings       settings.DbSettings         `mapstructure:"DbSettings"`
+	RabbitMqSettings settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
+	Http             settings.HttpServerSettings `mapstructure:"HttpServerSettings"`
 }
 
-type HttpSettings struct {
-	Port int    `mapstructure:"Port"`
-}
-
-type Config struct {
-	DbSettings DbSettings   `mapstructure:"DbSettings"`
-	Http       HttpSettings `mapstructure:"Http"`
-}
-
-func Load() (*Config, error) {
+func LoadServerConfig() (*ServerConfig, error) {
 	v := viper.New()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
@@ -40,7 +33,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("read config: %w", err)
 	}
 
-	var cfg Config
+	var cfg ServerConfig
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}

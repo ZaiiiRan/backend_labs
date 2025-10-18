@@ -8,14 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPgxPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+type PostgresClient struct {
+	pool *pgxpool.Pool
+}
+
+func NewPostgresClient(ctx context.Context, connString string) (*PostgresClient, error) {
 	cfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
 
 	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		names := []string{"v1_order", "_v1_order", "v1_order_item", "_v1_order_item"}
+		names := []string{"v1_order", "_v1_order", "v1_order_item", "_v1_order_item", "v1_audit_log_order", "_v1_audit_log_order"}
 		types, err := conn.LoadTypes(ctx, names)
 		if err != nil {
 			return fmt.Errorf("load types: %w", err)
@@ -33,5 +37,15 @@ func NewPgxPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
 
-	return pool, nil
+	return &PostgresClient{pool: pool}, nil
+}
+
+func (p *PostgresClient) GetConn(ctx context.Context) (*pgxpool.Conn, error) {
+	return p.pool.Acquire(ctx)
+}
+
+func (p *PostgresClient) Close() {
+	if p.pool != nil {
+		p.pool.Close()
+	}
 }

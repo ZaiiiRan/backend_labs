@@ -45,6 +45,7 @@ func registerRoutes(orderController *controllers.OrderController) http.Handler {
 
 	mux.HandleFunc("/api/v1/order/batch-create", orderController.BatchCreate)
 	mux.HandleFunc("/api/v1/order/query", orderController.QueryOrders)
+	mux.HandleFunc("/api/v1/audit-log/order/batch-create", orderController.AuditLogOrderBatchCreate)
 
 	return mux
 }
