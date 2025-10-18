@@ -30,26 +30,26 @@ func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if o.CustomerID <= 0 {
-		errs[prefix+".customerId"] = "must be greater than 0"
+		errs[prefix+".customer_id"] = "must be greater than 0"
 	}
 	if o.DeliveryAddress == "" {
-		errs[prefix+".deliveryAddress"] = "required"
+		errs[prefix+".delivery_address"] = "required"
 	}
 	if o.TotalPriceCents <= 0 {
-		errs[prefix+".totalPriceCents"] = "must be greater than 0"
+		errs[prefix+".total_price_cents"] = "must be greater than 0"
 	}
 	if o.TotalPriceCurr == "" {
-		errs[prefix+".totalPriceCurrency"] = "required"
+		errs[prefix+".total_price_currency"] = "required"
 	}
 	if len(o.OrderItems) == 0 {
-		errs[prefix+".orderItems"] = "at least one item is required"
+		errs[prefix+".order_items"] = "at least one item is required"
 		return errs
 	}
 
 	var sum int64
 	currencies := map[string]struct{}{}
 	for j, it := range o.OrderItems {
-		iprefix := fmt.Sprintf("%s.orderItems[%d]", prefix, j)
+		iprefix := fmt.Sprintf("%s.order_items[%d]", prefix, j)
 		itemErrs := validateOrderItem(it, iprefix)
 		errs.Merge(itemErrs)
 
@@ -58,13 +58,13 @@ func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
 	}
 
 	if sum != o.TotalPriceCents {
-		errs[prefix+".totalPriceCents"] = "must equal sum of items (priceCents * quantity)"
+		errs[prefix+".total_price_cents"] = "must equal sum of items (priceCents * quantity)"
 	}
 	if len(currencies) > 1 {
-		errs[prefix+".orderItems.priceCurrency"] = "all items must have the same currency"
+		errs[prefix+".order_items.price_currency"] = "all items must have the same currency"
 	}
 	if len(o.OrderItems) > 0 && o.OrderItems[0].PriceCurr != o.TotalPriceCurr {
-		errs[prefix+".totalPriceCurrency"] = "must equal items currency"
+		errs[prefix+".total_price_currency"] = "must equal items currency"
 	}
 
 	return errs
@@ -74,19 +74,19 @@ func validateOrderItem(it dto.V1OrderItem, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if it.ProductID <= 0 {
-		errs[prefix+".productId"] = "must be greater than 0"
+		errs[prefix+".product_id"] = "must be greater than 0"
 	}
 	if it.Quantity <= 0 {
 		errs[prefix+".quantity"] = "must be greater than 0"
 	}
 	if it.PriceCents <= 0 {
-		errs[prefix+".priceCents"] = "must be greater than 0"
+		errs[prefix+".price_cents"] = "must be greater than 0"
 	}
 	if it.ProductTitle == "" {
-		errs[prefix+".productTitle"] = "required"
+		errs[prefix+".product_title"] = "required"
 	}
 	if it.PriceCurr == "" {
-		errs[prefix+".priceCurrency"] = "required"
+		errs[prefix+".price_currency"] = "required"
 	}
 
 	return errs

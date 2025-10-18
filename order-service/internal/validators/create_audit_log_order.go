@@ -30,16 +30,16 @@ func validateLogOrder(l dto.V1LogOrder, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if l.OrderId <= 0 {
-		errs[prefix+".orderId"] = "must be greater than 0"
+		errs[prefix+".order_id"] = "must be greater than 0"
 	}
 	if l.OrderItemId <= 0 {
-		errs[prefix+".orderItemId"] = "must be greater than 0"
+		errs[prefix+".order_item_id"] = "must be greater than 0"
 	}
 	if l.CustomerId <= 0 {
-		errs[prefix+".customerId"] = "must be greater than 0"
+		errs[prefix+".customer_id"] = "must be greater than 0"
 	}
 	if l.OrderStatus == "" {
-		errs[prefix+".orderStatus"] = "required"
+		errs[prefix+".order_status"] = "required"
 	}
 
 	return errs
