@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	_ "github.com/ZaiiiRan/backend_labs/order-service/docs"
+	// _ "github.com/ZaiiiRan/backend_labs/order-service/docs"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/http/controllers"
 	httpSwagger "github.com/swaggo/http-swagger"
 )

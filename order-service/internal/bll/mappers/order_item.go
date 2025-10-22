@@ -1,10 +1,12 @@
 package mappers
 
 import (
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func DalOrderItemToBll(i dal.V1OrderItemDal) bll.OrderItemUnit {
@@ -64,6 +66,39 @@ func BllOrderItemToDto(it bll.OrderItemUnit) dto.V1OrderItem {
 		PriceCurr:    it.PriceCurr,
 		CreatedAt:    it.CreatedAt,
 		UpdatedAt:    it.UpdatedAt,
+	}
+}
+
+func PbOrderItemToBll(it *pb.OrderItem) bll.OrderItemUnit {
+	return bll.OrderItemUnit{
+		ID:           it.Id,
+		OrderID:      it.OrderId,
+		ProductID:    it.ProductId,
+		Quantity:     int(it.Quantity),
+		ProductTitle: it.ProductTitle,
+		ProductURL:   it.ProductUrl,
+		PriceCents:   it.PriceCents,
+		PriceCurr:    it.PriceCurrency,
+		CreatedAt:    it.CreatedAt.AsTime(),
+		UpdatedAt:    it.UpdatedAt.AsTime(),
+	}
+}
+
+func BllOrderItemToPb(it bll.OrderItemUnit) *pb.OrderItem {
+	createdAt := timestamppb.New(it.CreatedAt)
+	updatedAt := timestamppb.New(it.UpdatedAt)
+
+	return &pb.OrderItem{
+		Id:            it.ID,
+		OrderId:       it.OrderID,
+		ProductId:     it.ProductID,
+		Quantity:      int32(it.Quantity),
+		ProductTitle:  it.ProductTitle,
+		ProductUrl:    it.ProductURL,
+		PriceCents:    it.PriceCents,
+		PriceCurrency: it.PriceCurr,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}
 }
 
