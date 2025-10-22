@@ -72,7 +72,7 @@ func BllOrderToDto(o bll.OrderUnit) dto.V1Order {
 
 func PbOrderToBll(o *pb.Order) bll.OrderUnit {
 	var items []bll.OrderItemUnit
-	for _, it := range o.Items {
+	for _, it := range o.OrderItems {
 		items = append(items, PbOrderItemToBll(it))
 	}
 
@@ -105,7 +105,7 @@ func BllOrderToPb(o bll.OrderUnit) *pb.Order {
 		TotalPriceCurrency: o.TotalPriceCurr,
 		CreatedAt:          createdAt,
 		UpdatedAt:          updatedAt,
-		Items:              items,
+		OrderItems:         items,
 	}
 }
 

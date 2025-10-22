@@ -3,10 +3,10 @@ package validators
 import (
 	"fmt"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 )
 
-func ValidateV1CreateOrderRequest(req *dto.V1CreateOrderRequest) ValidationErrors {
+func ValidateBatchCreateRequest(req *pb.BatchCreateRequest) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if len(req.Orders) == 0 {
@@ -26,10 +26,10 @@ func ValidateV1CreateOrderRequest(req *dto.V1CreateOrderRequest) ValidationError
 	return nil
 }
 
-func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
+func validateOrder(o *pb.Order, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
-	if o.CustomerID <= 0 {
+	if o.CustomerId <= 0 {
 		errs[prefix+".customer_id"] = "must be greater than 0"
 	}
 	if o.DeliveryAddress == "" {
@@ -38,7 +38,7 @@ func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
 	if o.TotalPriceCents <= 0 {
 		errs[prefix+".total_price_cents"] = "must be greater than 0"
 	}
-	if o.TotalPriceCurr == "" {
+	if o.TotalPriceCurrency == "" {
 		errs[prefix+".total_price_currency"] = "required"
 	}
 	if len(o.OrderItems) == 0 {
@@ -54,7 +54,7 @@ func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
 		errs.Merge(itemErrs)
 
 		sum += it.PriceCents * int64(it.Quantity)
-		currencies[it.PriceCurr] = struct{}{}
+		currencies[it.PriceCurrency] = struct{}{}
 	}
 
 	if sum != o.TotalPriceCents {
@@ -63,17 +63,17 @@ func validateOrder(o dto.V1Order, prefix string) ValidationErrors {
 	if len(currencies) > 1 {
 		errs[prefix+".order_items.price_currency"] = "all items must have the same currency"
 	}
-	if len(o.OrderItems) > 0 && o.OrderItems[0].PriceCurr != o.TotalPriceCurr {
+	if len(o.OrderItems) > 0 && o.OrderItems[0].PriceCurrency != o.TotalPriceCurrency {
 		errs[prefix+".total_price_currency"] = "must equal items currency"
 	}
 
 	return errs
 }
 
-func validateOrderItem(it dto.V1OrderItem, prefix string) ValidationErrors {
+func validateOrderItem(it *pb.OrderItem, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
-	if it.ProductID <= 0 {
+	if it.ProductId <= 0 {
 		errs[prefix+".product_id"] = "must be greater than 0"
 	}
 	if it.Quantity <= 0 {
@@ -85,7 +85,7 @@ func validateOrderItem(it dto.V1OrderItem, prefix string) ValidationErrors {
 	if it.ProductTitle == "" {
 		errs[prefix+".product_title"] = "required"
 	}
-	if it.PriceCurr == "" {
+	if it.PriceCurrency == "" {
 		errs[prefix+".price_currency"] = "required"
 	}
 

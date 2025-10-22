@@ -11,6 +11,7 @@ import (
 	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,7 +37,10 @@ func (s *OrderService) BatchCreate(ctx context.Context, req *pb.BatchCreateReque
 	l := s.log.With("op", "batch_create")
 	l.Infow("order_controller.batch_create_start")
 
-	// TODO: validate
+	if errs := validators.ValidateBatchCreateRequest(req); errs != nil {
+		l.Errorw("order_controller.batch_create_request_validation_failed", "err", errs)
+		return nil, errs.ToStatus()
+	}
 
 	var orders []models.OrderUnit
 	for _, o := range req.Orders {
@@ -66,7 +70,10 @@ func (s *OrderService) QueryOrders(ctx context.Context, req *pb.QueryOrdersReque
 	l := s.log.With("op", "query_orders")
 	l.Infow("order_controller.query_orders_start")
 
-	// TODO: validate
+	if errs := validators.ValidateQueryOrdersRequest(req); errs != nil {
+		l.Errorw("order_controller.query_orders_request_validation_failed", "err", errs)
+		return nil, errs.ToStatus()
+	}
 
 	orderSvc := s.createBllOrderService(l)
 	defer orderSvc.UnitOfWork().Close()
@@ -91,7 +98,10 @@ func (s *OrderService) AuditLogOrderBatchCreate(ctx context.Context, req *pb.Aud
 	l := s.log.With("op", "audit_log_order_batch_create")
 	l.Infow("order_controller.audit_log_order_batch_create_start")
 
-	// TODO: validate
+	if errs := validators.ValidateAuditLogOrderBatchCreateRequest(req); errs != nil {
+		l.Errorw("order_controller.audit_log_order_batch_create_request_validation_failed", "err", errs)
+		return nil, errs.ToStatus()
+	}
 
 	var logs []models.AuditLogOrder
 	for _, i := range req.Orders {

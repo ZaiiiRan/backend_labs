@@ -263,7 +263,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "items": {
+        "orderItems": {
           "type": "array",
           "items": {
             "type": "object",
