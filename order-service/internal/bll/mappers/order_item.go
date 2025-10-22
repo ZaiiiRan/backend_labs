@@ -1,10 +1,11 @@
 package mappers
 
 import (
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func DalOrderItemToBll(i dal.V1OrderItemDal) bll.OrderItemUnit {
@@ -37,33 +38,36 @@ func BllOrderItemToDal(i bll.OrderItemUnit, orderID int64) dal.V1OrderItemDal {
 	}
 }
 
-func DtoOrderItemToBll(it dto.V1OrderItem) bll.OrderItemUnit {
+func PbOrderItemToBll(it *pb.OrderItem) bll.OrderItemUnit {
 	return bll.OrderItemUnit{
-		ID:           it.ID,
-		OrderID:      it.OrderID,
-		ProductID:    it.ProductID,
-		Quantity:     it.Quantity,
+		ID:           it.Id,
+		OrderID:      it.OrderId,
+		ProductID:    it.ProductId,
+		Quantity:     int(it.Quantity),
 		ProductTitle: it.ProductTitle,
-		ProductURL:   it.ProductURL,
+		ProductURL:   it.ProductUrl,
 		PriceCents:   it.PriceCents,
-		PriceCurr:    it.PriceCurr,
-		CreatedAt:    it.CreatedAt,
-		UpdatedAt:    it.UpdatedAt,
+		PriceCurr:    it.PriceCurrency,
+		CreatedAt:    it.CreatedAt.AsTime(),
+		UpdatedAt:    it.UpdatedAt.AsTime(),
 	}
 }
 
-func BllOrderItemToDto(it bll.OrderItemUnit) dto.V1OrderItem {
-	return dto.V1OrderItem{
-		ID:           it.ID,
-		OrderID:      it.OrderID,
-		ProductID:    it.ProductID,
-		Quantity:     it.Quantity,
-		ProductTitle: it.ProductTitle,
-		ProductURL:   it.ProductURL,
-		PriceCents:   it.PriceCents,
-		PriceCurr:    it.PriceCurr,
-		CreatedAt:    it.CreatedAt,
-		UpdatedAt:    it.UpdatedAt,
+func BllOrderItemToPb(it bll.OrderItemUnit) *pb.OrderItem {
+	createdAt := timestamppb.New(it.CreatedAt)
+	updatedAt := timestamppb.New(it.UpdatedAt)
+
+	return &pb.OrderItem{
+		Id:            it.ID,
+		OrderId:       it.OrderID,
+		ProductId:     it.ProductID,
+		Quantity:      int32(it.Quantity),
+		ProductTitle:  it.ProductTitle,
+		ProductUrl:    it.ProductURL,
+		PriceCents:    it.PriceCents,
+		PriceCurrency: it.PriceCurr,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}
 }
 

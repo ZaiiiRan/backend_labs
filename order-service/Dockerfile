@@ -20,7 +20,7 @@ COPY --from=builder /app/migrate .
 COPY --from=builder /app/consumer .
 
 COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/docs ./docs
+COPY --from=builder /app/gen/openapiv2/order-service/v1/ ./gen/openapiv2/order-service/v1/
 
 # COPY <<EOF /entrypoint.sh
 # #!/bin/sh

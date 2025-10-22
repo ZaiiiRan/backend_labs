@@ -11,3 +11,6 @@ RabbitMqSettings:
 
 HttpServerSettings:
   Port: 5000
+
+GrpcServerSettings:
+  Port: 50051

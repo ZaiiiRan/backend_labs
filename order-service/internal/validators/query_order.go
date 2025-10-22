@@ -3,10 +3,10 @@ package validators
 import (
 	"fmt"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 )
 
-func ValidateV1QueryOrdersRequest(req dto.V1QueryOrdersRequest) ValidationErrors {
+func ValidateQueryOrdersRequest(req *pb.QueryOrdersRequest) ValidationErrors {
 	errs := make(map[string]string)
 
 	if req.Page < 1 {
@@ -19,14 +19,14 @@ func ValidateV1QueryOrdersRequest(req dto.V1QueryOrdersRequest) ValidationErrors
 		errs["page_size"] = "must be less than or equal to 100"
 	}
 
-	for i, o := range req.IDs {
+	for i, o := range req.Ids {
 		key := fmt.Sprintf("ids[%d]", i)
 		if o <= 0 {
 			errs[key] = "must be greater than 0"
 		}
 	}
 
-	for i, cId := range req.CustomerIDs {
+	for i, cId := range req.CustomerIds {
 		key := fmt.Sprintf("customer_ids[%d]", i)
 		if cId <= 0 {
 			errs[key] = "must be greater than 0"

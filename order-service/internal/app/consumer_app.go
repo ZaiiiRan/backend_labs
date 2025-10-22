@@ -1,7 +1,7 @@
 package app
 
 import (
-	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/http"
+	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	consumer "github.com/ZaiiiRan/backend_labs/order-service/internal/consumer/rabbitmq"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
@@ -17,7 +17,7 @@ type ConsumerApp struct {
 
 	orderCreatedConsumer *consumer.OrderCreatedConsumer
 
-	omsClient *client.OmsHttpClient
+	omsClient *client.OmsGrpcClient
 }
 
 func NewConsumerApp() (*ConsumerApp, error) {
@@ -38,7 +38,9 @@ func (a *ConsumerApp) Run() error {
 	if err := a.initRabbitMqClient(); err != nil {
 		return err
 	}
-	a.initOmsHttpClient()
+	if err := a.initOmsGrpcClient(); err != nil {
+		return err
+	}
 	if err := a.initOrderCreatedConsumer(); err != nil {
 		return err
 	}
@@ -53,7 +55,9 @@ func (a *ConsumerApp) Run() error {
 func (a *ConsumerApp) Stop() {
 	a.log.Infow("app.stopping")
 
+	a.orderCreatedConsumer.Stop()
 	a.rabbitmqClient.Close()
+	a.omsClient.Close()
 
 	a.log.Infow("app.stopped")
 }
@@ -67,8 +71,14 @@ func (a *ConsumerApp) initRabbitMqClient() error {
 	return nil
 }
 
-func (a *ConsumerApp) initOmsHttpClient() {
-	a.omsClient = client.NewOmsHttpClient(a.cfg.OmsClientHttpSettings)
+func (a *ConsumerApp) initOmsGrpcClient() error {
+	client, err := client.NewOmsGrpcClient(a.cfg.OmsClientGrpcSettings)
+	if err != nil {
+		a.log.Errorw("app.create_oms_grpc_client_failed", "err", err)
+		return err
+	}
+	a.omsClient = client
+	return nil
 }
 
 func (a *ConsumerApp) initOrderCreatedConsumer() error {

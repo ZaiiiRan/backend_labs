@@ -3,10 +3,10 @@ package validators
 import (
 	"fmt"
 
-	"github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 )
 
-func ValidateV1CreateAuditLogOrderRequest(req dto.V1CreateAuditLogOrderRequest) ValidationErrors {
+func ValidateAuditLogOrderBatchCreateRequest(req *pb.AuditLogOrderBatchCreateRequest) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if len(req.Orders) == 0 {
@@ -26,7 +26,7 @@ func ValidateV1CreateAuditLogOrderRequest(req dto.V1CreateAuditLogOrderRequest) 
 	return nil
 }
 
-func validateLogOrder(l dto.V1LogOrder, prefix string) ValidationErrors {
+func validateLogOrder(l *pb.LogOrder, prefix string) ValidationErrors {
 	errs := make(ValidationErrors)
 
 	if l.OrderId <= 0 {
