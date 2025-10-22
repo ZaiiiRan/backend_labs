@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package order_service.v1;
+
+option go_package = "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1;orderv1";
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    info: {
+        title: "Order Service API";
+        version: "1.0";
+        description: "API for managing orders";
+    };
+    host: "localhost:5000";
+    schemes: HTTP;
+    schemes: HTTPS;
+    consumes: "application/json";
+    produces: "application/json";
+};
+
+service OrderService {
+    rpc BatchCreate(BatchCreateRequest) returns (BatchCreateResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/order/batch-create"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Create orders batch"
+            description: "Creates orders with order items"
+            tags: "orders"
+        };
+    }
+
+    rpc QueryOrders(QueryOrdersRequest) returns (QueryOrdersResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/order/query"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Query orders"
+            description: "Returns orders with optional order items"
+            tags: "orders"
+        };
+    }
+
+    rpc AuditLogOrderBatchCreate(AuditLogOrderBatchCreateRequest) returns (AuditLogOrderBatchCreateResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/audit-log/order/batch-create"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Create audit logs for orders batch"
+            description: "Creates audit logs for orders"
+            tags: "audit-logs"
+        };
+    }
+}
+
+message OrderItem {
+    int64 id = 1;
+    int64 order_id = 2;
+    int64 product_id = 3;
+    int32 quantity = 4;
+    string product_title = 5;
+    string product_url = 6;
+    int64 price_cents = 7;
+    string price_currency = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+}
+
+message Order {
+    int64 id = 1;
+    int64 customer_id = 2;
+    string delivery_address = 3;
+    int64 total_price_cents = 4;
+    string total_price_currency = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+    repeated OrderItem items = 8;
+}
+
+message BatchCreateRequest {
+    repeated Order orders = 1;
+}
+
+message BatchCreateResponse {
+    repeated Order orders = 1;
+}
+
+message QueryOrdersRequest {
+    repeated int64 ids = 1;
+    repeated int64 customer_ids = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    bool include_order_items = 5;
+}
+
+message QueryOrdersResponse {
+    repeated Order orders = 1;
+}
+
+message LogOrder {
+    int64 id = 1;
+    int64 order_id = 2;
+    int64 order_item_id = 3;
+    int64 customer_id = 4;
+    string order_status = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
+message AuditLogOrderBatchCreateRequest {
+    repeated LogOrder orders = 1;
+}
+
+message AuditLogOrderBatchCreateResponse {
+    repeated LogOrder orders = 1;
+}
