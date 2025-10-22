@@ -1,8 +1,3 @@
-// @title Order Service API
-// @version 1.0
-// @description API for managing orders
-// @host localhost:5000
-// @BasePath /
 package main
 
 import (

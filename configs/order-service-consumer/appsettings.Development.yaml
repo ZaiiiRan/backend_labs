@@ -5,5 +5,5 @@ RabbitMqSettings:
   Password: mypassword
   OrderCreatedQueue: oms.order.created
 
-OmsHttpClient:
-  BaseAdress: http://order-service:5000
+OmsGrpcClient:
+  Address: order-service:50051

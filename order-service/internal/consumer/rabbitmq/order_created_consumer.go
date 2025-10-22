@@ -1,13 +1,14 @@
 package consumer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
-	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/http"
+	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
-	dto "github.com/ZaiiiRan/backend_labs/order-service/pkg/api/dto/v1"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -15,7 +16,7 @@ import (
 
 type OrderCreatedConsumer struct {
 	client     *rabbitmq.RabbitMqClient
-	httpClient *client.OmsHttpClient
+	grpcClient *client.OmsGrpcClient
 	queue      string
 	ch         *amqp.Channel
 	stopCh     chan struct{}
@@ -23,9 +24,9 @@ type OrderCreatedConsumer struct {
 }
 
 func NewOrderCreatedConsumer(
-	client *rabbitmq.RabbitMqClient, 
-	omsHttpClient *client.OmsHttpClient, 
-	queue string, 
+	client *rabbitmq.RabbitMqClient,
+	omsGrpcClient *client.OmsGrpcClient,
+	queue string,
 	log *zap.SugaredLogger,
 ) (*OrderCreatedConsumer, error) {
 	ch, err := client.Channel()
@@ -35,11 +36,11 @@ func NewOrderCreatedConsumer(
 
 	return &OrderCreatedConsumer{
 		client:     client,
-		httpClient: omsHttpClient,
+		grpcClient: omsGrpcClient,
 		queue:      queue,
 		ch:         ch,
 		stopCh:     make(chan struct{}),
-		log: log,
+		log:        log,
 	}, nil
 }
 
@@ -107,9 +108,9 @@ func (c *OrderCreatedConsumer) handleMessage(msg amqp.Delivery) {
 		"items_count", len(order.OrderItems),
 	)
 
-	req := &dto.V1CreateAuditLogOrderRequest{}
+	req := &pb.AuditLogOrderBatchCreateRequest{}
 	for _, item := range order.OrderItems {
-		req.Orders = append(req.Orders, dto.V1LogOrder{
+		req.Orders = append(req.Orders, &pb.LogOrder{
 			OrderId:     order.Id,
 			OrderItemId: item.Id,
 			CustomerId:  order.CustomerID,
@@ -117,7 +118,7 @@ func (c *OrderCreatedConsumer) handleMessage(msg amqp.Delivery) {
 		})
 	}
 
-	if _, err := c.httpClient.LogOrder(req); err != nil {
+	if _, err := c.grpcClient.LogOrder(context.Background(), req); err != nil {
 		c.log.Errorw("order_created_consumer.log_order_failed", "err", err)
 		msg.Nack(false, true)
 		return

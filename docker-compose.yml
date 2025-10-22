@@ -73,6 +73,7 @@ services:
       - ./configs/order-service:/etc/order-service
     ports:
       - "5000:5000"
+      - "50051:50051"
     networks:
       - backend-labs-network
 

@@ -10,7 +10,7 @@ import (
 
 type ConsumerConfig struct {
 	RabbitMqSettings      settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
-	OmsClientHttpSettings settings.HttpClientSettings `mapstructure:"OmsHttpClient"`
+	OmsClientGrpcSettings settings.GrpcClientSettings `mapstructure:"OmsGrpcClient"`
 }
 
 func LoadConsumerConfig() (*ConsumerConfig, error) {
