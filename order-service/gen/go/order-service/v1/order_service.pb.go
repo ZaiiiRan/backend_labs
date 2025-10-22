@@ -632,30 +632,30 @@ var File_order_service_v1_order_service_proto protoreflect.FileDescriptor
 
 const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\n" +
-	"$order-service/v1/order_service.proto\x12\x10order_service.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf5\x02\n" +
-	"\tOrderItem\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x1d\n" +
+	"$order-service/v1/order_service.proto\x12\x10order_service.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb9\x03\n" +
+	"\tOrderItem\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\x02id\x12*\n" +
+	"\border_id\x18\x02 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\aorderId\x12.\n" +
 	"\n" +
-	"product_id\x18\x03 \x01(\x03R\tproductId\x12\x1a\n" +
+	"product_id\x18\x03 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\tproductId\x12\x1a\n" +
 	"\bquantity\x18\x04 \x01(\x05R\bquantity\x12#\n" +
 	"\rproduct_title\x18\x05 \x01(\tR\fproductTitle\x12\x1f\n" +
 	"\vproduct_url\x18\x06 \x01(\tR\n" +
-	"productUrl\x12\x1f\n" +
-	"\vprice_cents\x18\a \x01(\x03R\n" +
+	"productUrl\x120\n" +
+	"\vprice_cents\x18\a \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\n" +
 	"priceCents\x12%\n" +
 	"\x0eprice_currency\x18\b \x01(\tR\rpriceCurrency\x129\n" +
 	"\n" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xea\x02\n" +
-	"\x05Order\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
-	"\vcustomer_id\x18\x02 \x01(\x03R\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x9d\x03\n" +
+	"\x05Order\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\x02id\x120\n" +
+	"\vcustomer_id\x18\x02 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\n" +
 	"customerId\x12)\n" +
-	"\x10delivery_address\x18\x03 \x01(\tR\x0fdeliveryAddress\x12*\n" +
-	"\x11total_price_cents\x18\x04 \x01(\x03R\x0ftotalPriceCents\x120\n" +
+	"\x10delivery_address\x18\x03 \x01(\tR\x0fdeliveryAddress\x12;\n" +
+	"\x11total_price_cents\x18\x04 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\x0ftotalPriceCents\x120\n" +
 	"\x14total_price_currency\x18\x05 \x01(\tR\x12totalPriceCurrency\x129\n" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
@@ -665,20 +665,20 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\x12BatchCreateRequest\x12/\n" +
 	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"F\n" +
 	"\x13BatchCreateResponse\x12/\n" +
-	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\xaa\x01\n" +
-	"\x12QueryOrdersRequest\x12\x10\n" +
-	"\x03ids\x18\x01 \x03(\x03R\x03ids\x12!\n" +
-	"\fcustomer_ids\x18\x02 \x03(\x03R\vcustomerIds\x12\x12\n" +
+	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\xea\x01\n" +
+	"\x12QueryOrdersRequest\x124\n" +
+	"\x03ids\x18\x01 \x03(\x03B\"\x92A\x1f2\x11List of order IDs\x9a\x02\x01\x03\xa2\x02\x05int64R\x03ids\x12=\n" +
+	"\fcustomer_ids\x18\x02 \x03(\x03B\x1a\x92A\x172\tOrder IDs\x9a\x02\x01\x03\xa2\x02\x05int64R\vcustomerIds\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12.\n" +
 	"\x13include_order_items\x18\x05 \x01(\bR\x11includeOrderItems\"F\n" +
 	"\x13QueryOrdersResponse\x12/\n" +
-	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\x93\x02\n" +
-	"\bLogOrder\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\"\n" +
-	"\rorder_item_id\x18\x03 \x01(\x03R\vorderItemId\x12\x1f\n" +
-	"\vcustomer_id\x18\x04 \x01(\x03R\n" +
+	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\xd7\x02\n" +
+	"\bLogOrder\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\x02id\x12*\n" +
+	"\border_id\x18\x02 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\aorderId\x123\n" +
+	"\rorder_item_id\x18\x03 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\vorderItemId\x120\n" +
+	"\vcustomer_id\x18\x04 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\n" +
 	"customerId\x12!\n" +
 	"\forder_status\x18\x05 \x01(\tR\vorderStatus\x129\n" +
 	"\n" +

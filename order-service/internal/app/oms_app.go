@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
@@ -12,6 +13,7 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/logger"
 	grpcserver "github.com/ZaiiiRan/backend_labs/order-service/internal/server/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/grpc/services"
+	grpcgateway "github.com/ZaiiiRan/backend_labs/order-service/internal/server/grpc_gateway"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -31,7 +33,8 @@ type OmsApp struct {
 
 	orderService *services.OrderService
 
-	grpcServer *grpcserver.Server
+	grpcServer  *grpcserver.Server
+	grpcGateway *grpcgateway.Server
 }
 
 func NewOmsApp() (*OmsApp, error) {
@@ -65,6 +68,10 @@ func (a *OmsApp) Run(ctx context.Context) error {
 		return err
 	}
 	a.startGrpcServer()
+	if err := a.initGrpcGateway(ctx); err != nil {
+		return err
+	}
+	a.startGrpcGateway()
 	a.log.Infow("app.started")
 	return nil
 }
@@ -80,6 +87,7 @@ func (a *OmsApp) Stop(ctx context.Context) {
 	a.rabbitmqClient.Close()
 	// a.httpServer.Stop(shCtx)
 	a.grpcServer.Stop(shCtx)
+	a.grpcGateway.Stop(shCtx)
 
 	a.log.Infow("app.stopped")
 }
@@ -133,6 +141,25 @@ func (a *OmsApp) startGrpcServer() {
 		a.log.Infow("app.grpc.serve_start", "port", a.cfg.Grpc.Port)
 		if err := a.grpcServer.Start(); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			a.log.Errorw("app.grpc.serve_error", "err", err)
+		}
+	}()
+}
+
+func (a *OmsApp) initGrpcGateway(ctx context.Context) error {
+	srv, err := grpcgateway.NewServer(ctx, a.cfg.Http.Port, a.cfg.Grpc.Port)
+	if err != nil {
+		a.log.Errorw("app.http.gateway_init_failed", "err", err)
+		return err
+	}
+	a.grpcGateway = srv
+	return nil
+}
+
+func (a *OmsApp) startGrpcGateway() {
+	go func() {
+		a.log.Infow("app.http.gateway_start", "port", a.cfg.Http.Port)
+		if err := a.grpcGateway.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.log.Errorw("app.http.gateway_error", "err", err)
 		}
 	}()
 }

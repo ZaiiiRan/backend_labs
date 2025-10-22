@@ -19,6 +19,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     schemes: HTTPS;
     consumes: "application/json";
     produces: "application/json";
+    json_names_as_fields: true;
 };
 
 service OrderService {
@@ -60,23 +61,58 @@ service OrderService {
 }
 
 message OrderItem {
-    int64 id = 1;
-    int64 order_id = 2;
-    int64 product_id = 3;
+    int64 id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 order_id = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 product_id = 3 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     int32 quantity = 4;
     string product_title = 5;
     string product_url = 6;
-    int64 price_cents = 7;
+    int64 price_cents = 7 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     string price_currency = 8;
     google.protobuf.Timestamp created_at = 9;
     google.protobuf.Timestamp updated_at = 10;
 }
 
 message Order {
-    int64 id = 1;
-    int64 customer_id = 2;
+    int64 id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 customer_id = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     string delivery_address = 3;
-    int64 total_price_cents = 4;
+    int64 total_price_cents = 4 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     string total_price_currency = 5;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
@@ -92,8 +128,20 @@ message BatchCreateResponse {
 }
 
 message QueryOrdersRequest {
-    repeated int64 ids = 1;
-    repeated int64 customer_ids = 2;
+    repeated int64 ids = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of order IDs";
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    repeated int64 customer_ids = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Order IDs";
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     int32 page = 3;
     int32 page_size = 4;
     bool include_order_items = 5;
@@ -104,10 +152,30 @@ message QueryOrdersResponse {
 }
 
 message LogOrder {
-    int64 id = 1;
-    int64 order_id = 2;
-    int64 order_item_id = 3;
-    int64 customer_id = 4;
+    int64 id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 order_id = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 order_item_id = 3 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
+    int64 customer_id = 4 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            type: INTEGER;
+            format: "int64";
+        }
+    ];
     string order_status = 5;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
