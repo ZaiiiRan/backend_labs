@@ -4,14 +4,16 @@ plugins:
   - plugin: buf.build/protocolbuffers/go
   # - name: go
   #   path: protoc-gen-go
-    out: ../order-service/gen/go
+    out: 
+      - ../order-service/gen/go
     opt:
       - paths=source_relative
   
   - plugin: buf.build/grpc/go
   # - name: go-grpc
   #   path: protoc-gen-go-grpc
-    out: ../order-service/gen/go
+    out: 
+      - ../order-service/gen/go
     opt:
       - paths=source_relative
   
