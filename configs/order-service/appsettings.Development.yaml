@@ -1,6 +1,6 @@
 DbSettings:
-  MigrationConnectionString: postgres://user:mypassword@order-pgbouncer:5432/postgres?sslmode=disable
-  ConnectionString: postgres://user:mypassword@order-pgbouncer:5432/postgres?sslmode=disable
+  MigrationConnectionString: postgres://user:mypassword@order-pgbouncer:6432/postgres?sslmode=disable
+  ConnectionString: postgres://user:mypassword@order-pgbouncer:6432/postgres?sslmode=disable
 
 RabbitMqSettings:
   Host: order-rabbitmq
