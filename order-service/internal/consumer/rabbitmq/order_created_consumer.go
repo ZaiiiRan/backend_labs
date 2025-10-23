@@ -8,6 +8,7 @@ import (
 	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
+	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -17,16 +18,16 @@ import (
 type OrderCreatedConsumer struct {
 	client     *rabbitmq.RabbitMqClient
 	grpcClient *client.OmsGrpcClient
-	queue      string
+	cfg        *config.RabbitMqConsumerSettings
 	ch         *amqp.Channel
 	stopCh     chan struct{}
 	log        *zap.SugaredLogger
 }
 
 func NewOrderCreatedConsumer(
+	cfg *config.RabbitMqConsumerSettings,
 	client *rabbitmq.RabbitMqClient,
 	omsGrpcClient *client.OmsGrpcClient,
-	queue string,
 	log *zap.SugaredLogger,
 ) (*OrderCreatedConsumer, error) {
 	ch, err := client.Channel()
@@ -37,7 +38,7 @@ func NewOrderCreatedConsumer(
 	return &OrderCreatedConsumer{
 		client:     client,
 		grpcClient: omsGrpcClient,
-		queue:      queue,
+		cfg:        cfg,
 		ch:         ch,
 		stopCh:     make(chan struct{}),
 		log:        log,
@@ -50,7 +51,7 @@ func (c *OrderCreatedConsumer) Start() error {
 	}
 
 	_, err := c.ch.QueueDeclare(
-		c.queue,
+		c.cfg.Queue,
 		false,
 		false,
 		false,
@@ -66,8 +67,8 @@ func (c *OrderCreatedConsumer) Start() error {
 	}
 
 	msgs, err := c.ch.Consume(
-		c.queue,
-		"",
+		c.cfg.Queue,
+		c.cfg.Consumer,
 		false,
 		false,
 		false,
@@ -79,7 +80,7 @@ func (c *OrderCreatedConsumer) Start() error {
 	}
 
 	go func() {
-		c.log.Infow("order_created_consumer.started", "queue", c.queue)
+		c.log.Infow("order_created_consumer.started", "queue", c.cfg.Queue)
 		for {
 			select {
 			case <-c.stopCh:

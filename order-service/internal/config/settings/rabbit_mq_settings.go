@@ -6,5 +6,4 @@ type RabbitMqSettings struct {
 	User              string `mapstructure:"User"`
 	Password          string `mapstructure:"Password"`
 	VHost             string `mapstructure:"VHost"`
-	OrderCreatedQueue string `mapstructure:"OrderCreatedQueue"`
 }

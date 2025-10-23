@@ -9,10 +9,10 @@ import (
 )
 
 type ServerConfig struct {
-	DbSettings       settings.DbSettings         `mapstructure:"DbSettings"`
-	RabbitMqSettings settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
-	Http             settings.HttpServerSettings `mapstructure:"HttpServerSettings"`
-	Grpc             settings.GrpcServerSettings `mapstructure:"GrpcServerSettings"`
+	DbSettings                            settings.DbSettings                `mapstructure:"DbSettings"`
+	OrderCreatedRabbitMqPublisherSettings settings.RabbitMqPublisherSettings `mapstructure:"OrderCreatedPublisherSettings"`
+	Http                                  settings.HttpServerSettings        `mapstructure:"HttpServerSettings"`
+	Grpc                                  settings.GrpcServerSettings        `mapstructure:"GrpcServerSettings"`
 }
 
 func LoadServerConfig() (*ServerConfig, error) {

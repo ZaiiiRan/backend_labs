@@ -63,7 +63,7 @@ func (a *ConsumerApp) Stop() {
 }
 
 func (a *ConsumerApp) initRabbitMqClient() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.RabbitMqSettings)
+	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderCreatedRabbitMqConsumerSettings.RabbitMqSettings)
 	if err != nil {
 		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
 	}
@@ -82,7 +82,7 @@ func (a *ConsumerApp) initOmsGrpcClient() error {
 }
 
 func (a *ConsumerApp) initOrderCreatedConsumer() error {
-	orderCreatedConsumer, err := consumer.NewOrderCreatedConsumer(a.rabbitmqClient, a.omsClient, a.cfg.RabbitMqSettings.OrderCreatedQueue, a.log)
+	orderCreatedConsumer, err := consumer.NewOrderCreatedConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.rabbitmqClient, a.omsClient, a.log)
 	if err != nil {
 		a.log.Errorw("app.create_order_created_consumer_failed", "err", err)
 	}

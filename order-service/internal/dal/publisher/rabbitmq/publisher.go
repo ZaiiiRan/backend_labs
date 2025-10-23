@@ -6,24 +6,25 @@ import (
 	"fmt"
 	"time"
 
+	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Publisher struct {
 	client *rabbitmq.RabbitMqClient
-	queue  string
+	cfg    *config.RabbitMqPublisherSettings
 	ch     *amqp.Channel
 }
 
-func NewPublisher(client *rabbitmq.RabbitMqClient, queue string) (*Publisher, error) {
+func NewPublisher(cfg *config.RabbitMqPublisherSettings, client *rabbitmq.RabbitMqClient) (*Publisher, error) {
 	ch, err := client.Channel()
 	if err != nil {
 		return nil, err
 	}
 	return &Publisher{
+		cfg:    cfg,
 		client: client,
-		queue:  queue,
 		ch:     ch,
 	}, nil
 }
@@ -38,7 +39,7 @@ func (p *Publisher) PublishBatch(ctx context.Context, payloads []any) error {
 	}
 
 	_, err := p.ch.QueueDeclare(
-		p.queue,
+		p.cfg.Queue,
 		false,
 		false,
 		false,
@@ -64,7 +65,7 @@ func (p *Publisher) PublishBatch(ctx context.Context, payloads []any) error {
 		err = p.ch.PublishWithContext(
 			ctx,
 			"",
-			p.queue,
+			p.cfg.Queue,
 			false,
 			false,
 			amqp.Publishing{
@@ -76,7 +77,7 @@ func (p *Publisher) PublishBatch(ctx context.Context, payloads []any) error {
 			return fmt.Errorf("publish: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 

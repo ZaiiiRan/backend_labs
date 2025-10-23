@@ -1,9 +1,12 @@
-RabbitMqSettings:
-  Host: order-rabbitmq
-  Port: 5672
-  User: user
-  Password: mypassword
-  OrderCreatedQueue: oms.order.created
+OrderCreatedConsumerSettings:
+  RabbitMqSettings:
+    Host: order-rabbitmq
+    Port: 5672
+    User: user
+    Password: mypassword
+  Queue: oms.order.created
+  BatchSize: 100
+  BatchTimeoutSeconds: 1
 
 OmsGrpcClient:
   Address: order-service:50051
