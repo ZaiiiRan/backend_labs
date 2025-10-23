@@ -3,7 +3,9 @@ package app
 import (
 	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
-	consumer "github.com/ZaiiiRan/backend_labs/order-service/internal/consumer/rabbitmq"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/consumer"
+	dalconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer"
+	rabbitmqconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer/rabbitmq"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/logger"
 	"go.uber.org/zap"
@@ -15,7 +17,8 @@ type ConsumerApp struct {
 
 	rabbitmqClient *rabbitmq.RabbitMqClient
 
-	orderCreatedConsumer *consumer.OrderCreatedConsumer
+	orderCreatedConsumer         *rabbitmqconsumer.Consumer
+	orderCreatedMessageProcessor dalconsumer.MessageProcessor
 
 	omsClient *client.OmsGrpcClient
 }
@@ -41,6 +44,7 @@ func (a *ConsumerApp) Run() error {
 	if err := a.initOmsGrpcClient(); err != nil {
 		return err
 	}
+	a.initOrderCreatedMessageProcessor()
 	if err := a.initOrderCreatedConsumer(); err != nil {
 		return err
 	}
@@ -81,8 +85,13 @@ func (a *ConsumerApp) initOmsGrpcClient() error {
 	return nil
 }
 
+func (a *ConsumerApp) initOrderCreatedMessageProcessor() {
+	a.orderCreatedMessageProcessor = consumer.NewOrderCreatedMessageProcessor(a.omsClient, a.log)
+}
+
 func (a *ConsumerApp) initOrderCreatedConsumer() error {
-	orderCreatedConsumer, err := consumer.NewOrderCreatedConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.rabbitmqClient, a.omsClient, a.log)
+	orderCreatedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.rabbitmqClient,
+		a.orderCreatedMessageProcessor, a.log)
 	if err != nil {
 		a.log.Errorw("app.create_order_created_consumer_failed", "err", err)
 	}

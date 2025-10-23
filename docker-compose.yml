@@ -100,6 +100,8 @@ services:
     environment:
       APP_ENVIRONMENT: "Development"
     entrypoint: ["./consumer"]
+    deploy:
+      replicas: 5
     volumes:
       - ./configs/order-service-consumer:/etc/order-service-consumer
     networks:

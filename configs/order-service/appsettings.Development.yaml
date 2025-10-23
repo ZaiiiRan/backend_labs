@@ -8,6 +8,7 @@ OrderCreatedPublisherSettings:
     Port: 5672
     User: user
     Password: mypassword
+    Heartbeat: 10
   Queue: oms.order.created
 
 HttpServerSettings:
