@@ -61,6 +61,10 @@ func (c *OrderCreatedConsumer) Start() error {
 		return fmt.Errorf("queue declare: %w", err)
 	}
 
+	if err := c.ch.Qos(1, 0, false); err != nil {
+		return fmt.Errorf("set qos: %w", err)
+	}
+
 	msgs, err := c.ch.Consume(
 		c.queue,
 		"",
