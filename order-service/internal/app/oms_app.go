@@ -57,8 +57,6 @@ func (a *OmsApp) Run(ctx context.Context) error {
 	if err := a.initPublishers(); err != nil {
 		return err
 	}
-	// a.initOrderController()
-	// a.startHttpServer()
 	a.initOrderService()
 	if err := a.initGrpcServer(); err != nil {
 		return err
@@ -136,7 +134,7 @@ func (a *OmsApp) startGrpcServer() {
 	go func() {
 		a.log.Infow("app.grpc.serve_start", "port", a.cfg.Grpc.Port)
 		if err := a.grpcServer.Start(); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			a.log.Errorw("app.grpc.serve_error", "err", err)
+			a.log.Fatalw("app.grpc.serve_error", "err", err)
 		}
 	}()
 }
@@ -155,7 +153,7 @@ func (a *OmsApp) startGrpcGateway() {
 	go func() {
 		a.log.Infow("app.http.gateway_start", "port", a.cfg.Http.Port)
 		if err := a.grpcGateway.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			a.log.Errorw("app.http.gateway_error", "err", err)
+			a.log.Fatalw("app.http.gateway_error", "err", err)
 		}
 	}()
 }

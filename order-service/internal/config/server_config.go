@@ -25,6 +25,8 @@ func LoadServerConfig() (*ServerConfig, error) {
 		env = "Development"
 	}
 
+	setDefaultServerConfigValues(v)
+
 	v.SetConfigType("yaml")
 	v.SetConfigName("appsettings." + env)
 	v.AddConfigPath("/etc/order-service")
@@ -40,4 +42,12 @@ func LoadServerConfig() (*ServerConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+func setDefaultServerConfigValues(v *viper.Viper) {
+	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.HeartbeatSeconds", 30)
+	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
+	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
+	v.SetDefault("HttpServerSettings.Port", 5000)
+	v.SetDefault("GrpcServerSettings.Port", 50051)
 }

@@ -4,7 +4,6 @@ OrderCreatedConsumerSettings:
     Port: 5672
     User: user
     Password: mypassword
-    HeartbeatSeconds: 10
   Queue: oms.order.created
   BatchSize: 100
   BatchTimeoutSeconds: 1

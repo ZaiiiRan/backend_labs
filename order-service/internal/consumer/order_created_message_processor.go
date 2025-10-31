@@ -11,6 +11,8 @@ import (
 	dalconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type OrderCreatedMessageProcessor struct {
@@ -25,13 +27,13 @@ func NewOrderCreatedMessageProcessor(client *grpcclient.OmsGrpcClient, log *zap.
 	}
 }
 
-func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.MessageInfo) error {
+func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.MessageInfo) (bool, error) {
 	var orders []messages.OrderCreatedMessage
 	for _, msg := range batch {
 		var o messages.OrderCreatedMessage
 		if err := json.Unmarshal(msg.Body, &o); err != nil {
 			p.log.Errorw("order_created_message_processor.unmarshal_failed", "err", err, "body", string(msg.Body))
-			return fmt.Errorf("unmarshal: %w", err)
+			return false, fmt.Errorf("unmarshal: %w", err)
 		}
 		orders = append(orders, o)
 	}
@@ -52,9 +54,24 @@ func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch
 
 	if _, err := p.client.LogOrder(ctx, req); err != nil {
 		p.log.Errorw("order_created_message_processor.grpc_call_failed", "err", err)
-		return fmt.Errorf("grpc: %w", err)
+
+		needToRequeue := false
+		st, err := getGrpcErrStatus(err)
+		if err != nil || st.Code() != codes.InvalidArgument {
+			needToRequeue = true
+		}
+
+		return needToRequeue, fmt.Errorf("grpc: %w", err)
 	}
 
 	p.log.Infow("order_created_message_processor.batch_processed", "count", len(orders))
-	return nil
+	return false, nil
+}
+
+func getGrpcErrStatus(err error) (*status.Status, error) {
+	st, ok := status.FromError(err)
+	if !ok {
+		return nil, fmt.Errorf("not a grpc error: %w", err)
+	}
+	return st, nil
 }

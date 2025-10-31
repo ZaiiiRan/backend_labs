@@ -23,6 +23,7 @@ type Consumer struct {
 	mu               sync.Mutex
 	timer            *time.Timer
 	messageProcessor consumer.MessageProcessor
+	reconnectMu      sync.Mutex
 }
 
 func NewConsumer(
@@ -36,17 +37,75 @@ func NewConsumer(
 		return nil, fmt.Errorf("open channel: %w", err)
 	}
 
-	return &Consumer{
+	c := &Consumer{
 		cfg:              cfg,
 		client:           client,
 		ch:               ch,
 		log:              log,
 		stopCh:           make(chan struct{}),
 		messageProcessor: messageProcessor,
-	}, nil
+	}
+
+	return c, nil
 }
 
 func (c *Consumer) Start() error {
+	return c.runConsumeLoop()
+}
+
+func (c *Consumer) runConsumeLoop() error {
+	start := time.Now()
+	reconnectAttempts := 0
+	reconnectTimeout := time.Duration(c.cfg.RabbitMqSettings.ReconnectTimeoutSeconds) * time.Second
+	maxReconnects := c.cfg.RabbitMqSettings.MaxReconnectAttempts
+
+	for {
+		err := c.consume()
+		if err == nil {
+			return nil
+		}
+
+		select {
+		case <-c.stopCh:
+			return nil
+		default:
+		}
+
+		reconnectAttempts++
+		elapsed := time.Since(start)
+
+		if elapsed > reconnectTimeout {
+			c.log.Errorw("consumer.reconnect_timeout_exceeded",
+				"queue", c.cfg.Queue,
+				"elapsed", elapsed,
+				"timeout", reconnectTimeout)
+			return fmt.Errorf("reconnect timeout exceeded")
+		}
+
+		if reconnectAttempts > maxReconnects {
+			c.log.Errorw("consumer.max_reconnects_exceeded",
+				"queue", c.cfg.Queue,
+				"attempts", reconnectAttempts)
+			return fmt.Errorf("max reconnect attempts exceeded")
+		}
+
+		backoff := time.Duration(reconnectAttempts) * time.Second
+		c.log.Warnw("consumer.reconnect_attempt",
+			"queue", c.cfg.Queue,
+			"attempt", reconnectAttempts,
+			"backoff", backoff,
+			"err", err)
+
+		select {
+		case <-time.After(backoff):
+			continue
+		case <-c.stopCh:
+			return nil
+		}
+	}
+}
+
+func (c *Consumer) consume() error {
 	if err := c.ensureChannel(); err != nil {
 		return err
 	}
@@ -81,28 +140,36 @@ func (c *Consumer) Start() error {
 	}
 
 	batchTimeout := time.Duration(c.cfg.BatchTimeoutSeconds) * time.Second
-	c.timer = time.AfterFunc(batchTimeout, func() {
-		c.processBatch("timeout")
-	})
+	c.resetTimer(batchTimeout)
 
-	go func() {
-		c.log.Infow("consumer.started", "queue", c.cfg.Queue)
-		for {
-			select {
-			case <-c.stopCh:
-				c.log.Infow("consumer.stopped", "queue", c.cfg.Queue)
-				return
-			case msg, ok := <-msgs:
-				if !ok {
-					c.log.Warnw("consumer.channel_closed", "queue", c.cfg.Queue)
-					return
-				}
-				c.handleMessage(msg)
+	notifyClose := c.ch.NotifyClose(make(chan *amqp.Error))
+	notifyCancel := c.ch.NotifyCancel(make(chan string))
+
+	c.log.Infow("consumer.started", "queue", c.cfg.Queue)
+
+	for {
+		select {
+		case <-c.stopCh:
+			c.log.Infow("consumer.stopped", "queue", c.cfg.Queue)
+			return nil
+		case msg, ok := <-msgs:
+			if !ok {
+				c.log.Warnw("consumer.msg_channel_closed", "queue", c.cfg.Queue)
+				return fmt.Errorf("channel closed")
 			}
+			c.handleMessage(msg)
+		case err := <-notifyClose:
+			if err != nil {
+				c.log.Warnw("consumer.channel_closed_by_server", "queue", c.cfg.Queue, "err", err)
+			} else {
+				c.log.Warnw("consumer.channel_closed_by_server", "queue", c.cfg.Queue)
+			}
+			return fmt.Errorf("channel closed")
+		case tag := <-notifyCancel:
+			c.log.Warnw("consumer.canceled_by_server", "queue", c.cfg.Queue, "tag", tag)
+			return fmt.Errorf("consumer canceled by server")
 		}
-	}()
-
-	return nil
+	}
 }
 
 func (c *Consumer) handleMessage(msg amqp.Delivery) {
@@ -137,17 +204,32 @@ func (c *Consumer) processBatch(trigger string) {
 
 	c.log.Infow("consumer.process_started", "queue", c.cfg.Queue, "count", len(batch), "trigger", trigger)
 
-	if err := c.messageProcessor.ProcessMessage(ctx, batch); err != nil {
-		c.log.Errorw("consumer.process_failed", "queue", c.cfg.Queue, "err", err)
+	requeue, err := c.messageProcessor.ProcessMessage(ctx, batch)
+	if err != nil {
+		c.log.Errorw("consumer.process_failed", "queue", c.cfg.Queue, "err", err, "need_requeue", requeue)
 		last := batch[len(batch)-1]
-		c.ch.Nack(last.DeliveryTag, true, true)
+		c.nack(last.DeliveryTag, true, requeue)
 		return
 	}
 
 	last := batch[len(batch)-1]
-	if err := c.ch.Ack(last.DeliveryTag, true); err != nil {
+	if err := c.ack(last.DeliveryTag, true); err != nil {
 		c.log.Errorw("consumer.ack_failed", "queue", c.cfg.Queue, "err", err)
 	}
+}
+
+func (c *Consumer) ack(tag uint64, multiple bool) error {
+	if err := c.ensureChannel(); err != nil {
+		return err
+	}
+	return c.ch.Ack(tag, multiple)
+}
+
+func (c *Consumer) nack(tag uint64, multiple, requeue bool) error {
+	if err := c.ensureChannel(); err != nil {
+		return err
+	}
+	return c.ch.Nack(tag, multiple, requeue)
 }
 
 func (c *Consumer) Stop() {
@@ -163,13 +245,28 @@ func (c *Consumer) Stop() {
 	}
 }
 
-func (c *Consumer) ensureChannel() error {
-	if c.ch == nil || c.ch.IsClosed() {
-		ch, err := c.client.Channel()
-		if err != nil {
-			return fmt.Errorf("reopen channel: %w", err)
-		}
-		c.ch = ch
+func (c *Consumer) resetTimer(d time.Duration) {
+	if c.timer != nil {
+		c.timer.Stop()
 	}
+	c.timer = time.AfterFunc(d, func() {
+		c.processBatch("timeout")
+		c.resetTimer(d)
+	})
+}
+
+func (c *Consumer) ensureChannel() error {
+	c.reconnectMu.Lock()
+	defer c.reconnectMu.Unlock()
+
+	if c.ch != nil && !c.ch.IsClosed() {
+		return nil
+	}
+
+	ch, err := c.client.Channel()
+	if err != nil {
+		return fmt.Errorf("reopen channel: %w", err)
+	}
+	c.ch = ch
 	return nil
 }

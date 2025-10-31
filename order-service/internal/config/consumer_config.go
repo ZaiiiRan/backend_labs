@@ -23,6 +23,8 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 		env = "Development"
 	}
 
+	setDefaultConsumerConfigValues(v)
+
 	v.SetConfigType("yaml")
 	v.SetConfigName("appsettings." + env)
 	v.AddConfigPath("/etc/order-service-consumer")
@@ -38,4 +40,12 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+func setDefaultConsumerConfigValues(v *viper.Viper) {
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.HeartbeatSeconds", 30)
+	v.SetDefault("OrderCreatedConsumerSettings.BatchSize", 100)
+	v.SetDefault("OrderCreatedConsumerSettings.BatchTimeoutSeconds", 1)
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
 }

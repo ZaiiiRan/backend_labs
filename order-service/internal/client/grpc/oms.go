@@ -42,7 +42,7 @@ func (c *OmsGrpcClient) LogOrder(ctx context.Context, req *pb.AuditLogOrderBatch
 
 	resp, err := c.client.AuditLogOrderBatchCreate(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("grpc call AuditLogOrderBatchCreate failed: %w", err)
+		return nil, err
 	}
 
 	return resp, nil

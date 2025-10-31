@@ -100,9 +100,10 @@ func (a *ConsumerApp) initOrderCreatedConsumer() error {
 }
 
 func (a *ConsumerApp) startOrderCreatedConsumer() error {
-	if err := a.orderCreatedConsumer.Start(); err != nil {
-		a.log.Errorw("app.start_order_created_consumer_failed", "err", err)
-		return err
-	}
+	go func() {
+		if err := a.orderCreatedConsumer.Start(); err != nil {
+			a.log.Fatalw("app.start_order_created_consumer_failed", "err", err)
+		}
+	}()
 	return nil
 }
