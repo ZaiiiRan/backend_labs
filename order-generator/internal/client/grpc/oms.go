@@ -6,7 +6,7 @@ import (
 	"time"
 
 	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
-	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
+	config "github.com/ZaiiiRan/backend_labs/order-generator/internal/config/settings"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -36,13 +36,13 @@ func (c *OmsGrpcClient) Close() error {
 	return c.conn.Close()
 }
 
-func (c *OmsGrpcClient) LogOrder(ctx context.Context, req *pb.AuditLogOrderBatchCreateRequest) (*pb.AuditLogOrderBatchCreateResponse, error) {
+func (c *OmsGrpcClient) BatchCreate(ctx context.Context, req *pb.BatchCreateRequest) (*pb.BatchCreateResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	resp, err := c.client.AuditLogOrderBatchCreate(ctx, req)
+	resp, err := c.client.BatchCreate(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("grpc call BatchCreate failed: %w", err)
 	}
 
 	return resp, nil

@@ -9,8 +9,8 @@ import (
 )
 
 type ConsumerConfig struct {
-	RabbitMqSettings      settings.RabbitMqSettings   `mapstructure:"RabbitMqSettings"`
-	OmsClientGrpcSettings settings.GrpcClientSettings `mapstructure:"OmsGrpcClient"`
+	OrderCreatedRabbitMqConsumerSettings settings.RabbitMqConsumerSettings `mapstructure:"OrderCreatedConsumerSettings"`
+	OmsClientGrpcSettings                settings.GrpcClientSettings       `mapstructure:"OmsGrpcClient"`
 }
 
 func LoadConsumerConfig() (*ConsumerConfig, error) {
@@ -22,6 +22,8 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 	if env == "" {
 		env = "Development"
 	}
+
+	setDefaultConsumerConfigValues(v)
 
 	v.SetConfigType("yaml")
 	v.SetConfigName("appsettings." + env)
@@ -38,4 +40,12 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+func setDefaultConsumerConfigValues(v *viper.Viper) {
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.HeartbeatSeconds", 30)
+	v.SetDefault("OrderCreatedConsumerSettings.BatchSize", 100)
+	v.SetDefault("OrderCreatedConsumerSettings.BatchTimeoutSeconds", 1)
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
+	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
 }

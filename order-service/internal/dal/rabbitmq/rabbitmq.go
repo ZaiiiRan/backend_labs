@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -50,7 +51,9 @@ func (c *RabbitMqClient) connect() error {
 		vhost,
 	)
 
-	conn, err := amqp.Dial(dsn)
+	conn, err := amqp.DialConfig(dsn, amqp.Config{
+		Heartbeat: time.Duration(c.cfg.HeartbeatSeconds) * time.Second,
+	})
 	if err != nil {
 		return fmt.Errorf("amqp dial: %w", err)
 	}
