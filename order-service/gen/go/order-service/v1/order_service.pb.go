@@ -628,6 +628,94 @@ func (x *AuditLogOrderBatchCreateResponse) GetOrders() []*LogOrder {
 	return nil
 }
 
+type UpdateOrdersStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderIds      []int64                `protobuf:"varint,1,rep,packed,name=order_ids,json=orderIds,proto3" json:"order_ids,omitempty"`
+	NewStatus     string                 `protobuf:"bytes,2,opt,name=new_status,json=newStatus,proto3" json:"new_status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateOrdersStatusRequest) Reset() {
+	*x = UpdateOrdersStatusRequest{}
+	mi := &file_order_service_v1_order_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateOrdersStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateOrdersStatusRequest) ProtoMessage() {}
+
+func (x *UpdateOrdersStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_order_service_v1_order_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateOrdersStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateOrdersStatusRequest) Descriptor() ([]byte, []int) {
+	return file_order_service_v1_order_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateOrdersStatusRequest) GetOrderIds() []int64 {
+	if x != nil {
+		return x.OrderIds
+	}
+	return nil
+}
+
+func (x *UpdateOrdersStatusRequest) GetNewStatus() string {
+	if x != nil {
+		return x.NewStatus
+	}
+	return ""
+}
+
+type UpdateOrdersStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateOrdersStatusResponse) Reset() {
+	*x = UpdateOrdersStatusResponse{}
+	mi := &file_order_service_v1_order_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateOrdersStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateOrdersStatusResponse) ProtoMessage() {}
+
+func (x *UpdateOrdersStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_order_service_v1_order_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateOrdersStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateOrdersStatusResponse) Descriptor() ([]byte, []int) {
+	return file_order_service_v1_order_service_proto_rawDescGZIP(), []int{10}
+}
+
 var File_order_service_v1_order_service_proto protoreflect.FileDescriptor
 
 const file_order_service_v1_order_service_proto_rawDesc = "" +
@@ -666,10 +754,10 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\x12BatchCreateRequest\x12/\n" +
 	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"F\n" +
 	"\x13BatchCreateResponse\x12/\n" +
-	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\xea\x01\n" +
-	"\x12QueryOrdersRequest\x124\n" +
-	"\x03ids\x18\x01 \x03(\x03B\"\x92A\x1f2\x11List of order IDs\x9a\x02\x01\x03\xa2\x02\x05int64R\x03ids\x12=\n" +
-	"\fcustomer_ids\x18\x02 \x03(\x03B\x1a\x92A\x172\tOrder IDs\x9a\x02\x01\x03\xa2\x02\x05int64R\vcustomerIds\x12\x12\n" +
+	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"\xaa\x01\n" +
+	"\x12QueryOrdersRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\x03R\x03ids\x12!\n" +
+	"\fcustomer_ids\x18\x02 \x03(\x03R\vcustomerIds\x12\x12\n" +
 	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12.\n" +
 	"\x13include_order_items\x18\x05 \x01(\bR\x11includeOrderItems\"F\n" +
@@ -689,7 +777,12 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\x1fAuditLogOrderBatchCreateRequest\x122\n" +
 	"\x06orders\x18\x01 \x03(\v2\x1a.order_service.v1.LogOrderR\x06orders\"V\n" +
 	" AuditLogOrderBatchCreateResponse\x122\n" +
-	"\x06orders\x18\x01 \x03(\v2\x1a.order_service.v1.LogOrderR\x06orders2\x9b\x05\n" +
+	"\x06orders\x18\x01 \x03(\v2\x1a.order_service.v1.LogOrderR\x06orders\"W\n" +
+	"\x19UpdateOrdersStatusRequest\x12\x1b\n" +
+	"\torder_ids\x18\x01 \x03(\x03R\borderIds\x12\x1d\n" +
+	"\n" +
+	"new_status\x18\x02 \x01(\tR\tnewStatus\"\x1c\n" +
+	"\x1aUpdateOrdersStatusResponse2\xfd\x06\n" +
 	"\fOrderService\x12\xc2\x01\n" +
 	"\vBatchCreate\x12$.order_service.v1.BatchCreateRequest\x1a%.order_service.v1.BatchCreateResponse\"f\x92A>\n" +
 	"\x06orders\x12\x13Create orders batch\x1a\x1fCreates orders with order items\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/v1/order/batch-create\x12\xbd\x01\n" +
@@ -697,7 +790,9 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\x06orders\x12\fQuery orders\x1a(Returns orders with optional order items\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/order/query\x12\x85\x02\n" +
 	"\x18AuditLogOrderBatchCreate\x121.order_service.v1.AuditLogOrderBatchCreateRequest\x1a2.order_service.v1.AuditLogOrderBatchCreateResponse\"\x81\x01\x92AO\n" +
 	"\n" +
-	"audit-logs\x12\"Create audit logs for orders batch\x1a\x1dCreates audit logs for orders\x82\xd3\xe4\x93\x02):\x01*\"$/api/v1/audit-log/order/batch-createB\xbe\x01\x92Ak\x121\n" +
+	"audit-logs\x12\"Create audit logs for orders batch\x1a\x1dCreates audit logs for orders\x82\xd3\xe4\x93\x02):\x01*\"$/api/v1/audit-log/order/batch-create\x12\xdf\x01\n" +
+	"\x12UpdateOrdersStatus\x12+.order_service.v1.UpdateOrdersStatusRequest\x1a,.order_service.v1.UpdateOrdersStatusResponse\"n\x92AE\n" +
+	"\x06orders\x12\x14Update orders status\x1a%Updates the status of multiple orders\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/order/update-statusB\xbe\x01\x92Ak\x121\n" +
 	"\x11Order Service API\x12\x17API for managing orders2\x031.0\x1a\x0elocalhost:5000*\x02\x01\x022\x10application/json:\x10application/jsonZNgithub.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1;orderv1b\x06proto3"
 
 var (
@@ -712,7 +807,7 @@ func file_order_service_v1_order_service_proto_rawDescGZIP() []byte {
 	return file_order_service_v1_order_service_proto_rawDescData
 }
 
-var file_order_service_v1_order_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_order_service_v1_order_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_order_service_v1_order_service_proto_goTypes = []any{
 	(*OrderItem)(nil),                        // 0: order_service.v1.OrderItem
 	(*Order)(nil),                            // 1: order_service.v1.Order
@@ -723,29 +818,33 @@ var file_order_service_v1_order_service_proto_goTypes = []any{
 	(*LogOrder)(nil),                         // 6: order_service.v1.LogOrder
 	(*AuditLogOrderBatchCreateRequest)(nil),  // 7: order_service.v1.AuditLogOrderBatchCreateRequest
 	(*AuditLogOrderBatchCreateResponse)(nil), // 8: order_service.v1.AuditLogOrderBatchCreateResponse
-	(*timestamppb.Timestamp)(nil),            // 9: google.protobuf.Timestamp
+	(*UpdateOrdersStatusRequest)(nil),        // 9: order_service.v1.UpdateOrdersStatusRequest
+	(*UpdateOrdersStatusResponse)(nil),       // 10: order_service.v1.UpdateOrdersStatusResponse
+	(*timestamppb.Timestamp)(nil),            // 11: google.protobuf.Timestamp
 }
 var file_order_service_v1_order_service_proto_depIdxs = []int32{
-	9,  // 0: order_service.v1.OrderItem.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 1: order_service.v1.OrderItem.updated_at:type_name -> google.protobuf.Timestamp
-	9,  // 2: order_service.v1.Order.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 3: order_service.v1.Order.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 0: order_service.v1.OrderItem.created_at:type_name -> google.protobuf.Timestamp
+	11, // 1: order_service.v1.OrderItem.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 2: order_service.v1.Order.created_at:type_name -> google.protobuf.Timestamp
+	11, // 3: order_service.v1.Order.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: order_service.v1.Order.order_items:type_name -> order_service.v1.OrderItem
 	1,  // 5: order_service.v1.BatchCreateRequest.orders:type_name -> order_service.v1.Order
 	1,  // 6: order_service.v1.BatchCreateResponse.orders:type_name -> order_service.v1.Order
 	1,  // 7: order_service.v1.QueryOrdersResponse.orders:type_name -> order_service.v1.Order
-	9,  // 8: order_service.v1.LogOrder.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 9: order_service.v1.LogOrder.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 8: order_service.v1.LogOrder.created_at:type_name -> google.protobuf.Timestamp
+	11, // 9: order_service.v1.LogOrder.updated_at:type_name -> google.protobuf.Timestamp
 	6,  // 10: order_service.v1.AuditLogOrderBatchCreateRequest.orders:type_name -> order_service.v1.LogOrder
 	6,  // 11: order_service.v1.AuditLogOrderBatchCreateResponse.orders:type_name -> order_service.v1.LogOrder
 	2,  // 12: order_service.v1.OrderService.BatchCreate:input_type -> order_service.v1.BatchCreateRequest
 	4,  // 13: order_service.v1.OrderService.QueryOrders:input_type -> order_service.v1.QueryOrdersRequest
 	7,  // 14: order_service.v1.OrderService.AuditLogOrderBatchCreate:input_type -> order_service.v1.AuditLogOrderBatchCreateRequest
-	3,  // 15: order_service.v1.OrderService.BatchCreate:output_type -> order_service.v1.BatchCreateResponse
-	5,  // 16: order_service.v1.OrderService.QueryOrders:output_type -> order_service.v1.QueryOrdersResponse
-	8,  // 17: order_service.v1.OrderService.AuditLogOrderBatchCreate:output_type -> order_service.v1.AuditLogOrderBatchCreateResponse
-	15, // [15:18] is the sub-list for method output_type
-	12, // [12:15] is the sub-list for method input_type
+	9,  // 15: order_service.v1.OrderService.UpdateOrdersStatus:input_type -> order_service.v1.UpdateOrdersStatusRequest
+	3,  // 16: order_service.v1.OrderService.BatchCreate:output_type -> order_service.v1.BatchCreateResponse
+	5,  // 17: order_service.v1.OrderService.QueryOrders:output_type -> order_service.v1.QueryOrdersResponse
+	8,  // 18: order_service.v1.OrderService.AuditLogOrderBatchCreate:output_type -> order_service.v1.AuditLogOrderBatchCreateResponse
+	10, // 19: order_service.v1.OrderService.UpdateOrdersStatus:output_type -> order_service.v1.UpdateOrdersStatusResponse
+	16, // [16:20] is the sub-list for method output_type
+	12, // [12:16] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name
@@ -762,7 +861,7 @@ func file_order_service_v1_order_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_order_service_v1_order_service_proto_rawDesc), len(file_order_service_v1_order_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

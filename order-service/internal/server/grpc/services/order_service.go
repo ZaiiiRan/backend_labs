@@ -94,6 +94,10 @@ func (s *OrderService) QueryOrders(ctx context.Context, req *pb.QueryOrdersReque
 	return &resp, nil
 }
 
+func (s *OrderService) UpdateOrdersStatus(ctx context.Context, req *pb.UpdateOrdersStatusRequest) (*pb.UpdateOrdersStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrdersStatus not implemented")
+}
+
 func (s *OrderService) AuditLogOrderBatchCreate(ctx context.Context, req *pb.AuditLogOrderBatchCreateRequest) (*pb.AuditLogOrderBatchCreateResponse, error) {
 	l := s.log.With("op", "audit_log_order_batch_create")
 	l.Infow("order_controller.audit_log_order_batch_create_start")

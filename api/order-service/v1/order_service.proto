@@ -57,6 +57,18 @@ service OrderService {
             tags: "audit-logs"
         };
     }
+
+    rpc UpdateOrdersStatus(UpdateOrdersStatusRequest) returns (UpdateOrdersStatusResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/order/update-status"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Update orders status"
+            description: "Updates the status of multiple orders"
+            tags: "orders"
+        };
+    }
 }
 
 message OrderItem {
@@ -127,20 +139,8 @@ message BatchCreateResponse {
 }
 
 message QueryOrdersRequest {
-    repeated int64 ids = 1 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "List of order IDs";
-            type: INTEGER;
-            format: "int64";
-        }
-    ];
-    repeated int64 customer_ids = 2 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Order IDs";
-            type: INTEGER;
-            format: "int64";
-        }
-    ];
+    repeated int64 ids = 1;
+    repeated int64 customer_ids = 2;
     int32 page = 3;
     int32 page_size = 4;
     bool include_order_items = 5;
@@ -187,3 +187,10 @@ message AuditLogOrderBatchCreateRequest {
 message AuditLogOrderBatchCreateResponse {
     repeated LogOrder orders = 1;
 }
+
+message UpdateOrdersStatusRequest {
+    repeated int64 order_ids = 1;
+    string new_status = 2;
+}
+
+message UpdateOrdersStatusResponse {}

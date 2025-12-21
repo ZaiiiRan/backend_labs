@@ -123,6 +123,40 @@
           "orders"
         ]
       }
+    },
+    "/api/v1/order/update-status": {
+      "post": {
+        "summary": "Update orders status",
+        "description": "Updates the status of multiple orders",
+        "operationId": "OrderService_UpdateOrdersStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateOrdersStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateOrdersStatusRequest"
+            }
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
     }
   },
   "definitions": {
@@ -318,20 +352,18 @@
       "type": "object",
       "properties": {
         "ids": {
-          "type": "integer",
+          "type": "array",
           "items": {
             "type": "string",
             "format": "int64"
-          },
-          "description": "List of order IDs"
+          }
         },
         "customerIds": {
-          "type": "integer",
+          "type": "array",
           "items": {
             "type": "string",
             "format": "int64"
-          },
-          "description": "Order IDs"
+          }
         },
         "page": {
           "type": "integer",
@@ -357,6 +389,24 @@
           }
         }
       }
+    },
+    "v1UpdateOrdersStatusRequest": {
+      "type": "object",
+      "properties": {
+        "orderIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "int64"
+          }
+        },
+        "newStatus": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdateOrdersStatusResponse": {
+      "type": "object"
     }
   }
 }

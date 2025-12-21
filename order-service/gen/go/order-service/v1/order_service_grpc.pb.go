@@ -22,6 +22,7 @@ const (
 	OrderService_BatchCreate_FullMethodName              = "/order_service.v1.OrderService/BatchCreate"
 	OrderService_QueryOrders_FullMethodName              = "/order_service.v1.OrderService/QueryOrders"
 	OrderService_AuditLogOrderBatchCreate_FullMethodName = "/order_service.v1.OrderService/AuditLogOrderBatchCreate"
+	OrderService_UpdateOrdersStatus_FullMethodName       = "/order_service.v1.OrderService/UpdateOrdersStatus"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -31,6 +32,7 @@ type OrderServiceClient interface {
 	BatchCreate(ctx context.Context, in *BatchCreateRequest, opts ...grpc.CallOption) (*BatchCreateResponse, error)
 	QueryOrders(ctx context.Context, in *QueryOrdersRequest, opts ...grpc.CallOption) (*QueryOrdersResponse, error)
 	AuditLogOrderBatchCreate(ctx context.Context, in *AuditLogOrderBatchCreateRequest, opts ...grpc.CallOption) (*AuditLogOrderBatchCreateResponse, error)
+	UpdateOrdersStatus(ctx context.Context, in *UpdateOrdersStatusRequest, opts ...grpc.CallOption) (*UpdateOrdersStatusResponse, error)
 }
 
 type orderServiceClient struct {
@@ -71,6 +73,16 @@ func (c *orderServiceClient) AuditLogOrderBatchCreate(ctx context.Context, in *A
 	return out, nil
 }
 
+func (c *orderServiceClient) UpdateOrdersStatus(ctx context.Context, in *UpdateOrdersStatusRequest, opts ...grpc.CallOption) (*UpdateOrdersStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateOrdersStatusResponse)
+	err := c.cc.Invoke(ctx, OrderService_UpdateOrdersStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type OrderServiceServer interface {
 	BatchCreate(context.Context, *BatchCreateRequest) (*BatchCreateResponse, error)
 	QueryOrders(context.Context, *QueryOrdersRequest) (*QueryOrdersResponse, error)
 	AuditLogOrderBatchCreate(context.Context, *AuditLogOrderBatchCreateRequest) (*AuditLogOrderBatchCreateResponse, error)
+	UpdateOrdersStatus(context.Context, *UpdateOrdersStatusRequest) (*UpdateOrdersStatusResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedOrderServiceServer) QueryOrders(context.Context, *QueryOrders
 }
 func (UnimplementedOrderServiceServer) AuditLogOrderBatchCreate(context.Context, *AuditLogOrderBatchCreateRequest) (*AuditLogOrderBatchCreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuditLogOrderBatchCreate not implemented")
+}
+func (UnimplementedOrderServiceServer) UpdateOrdersStatus(context.Context, *UpdateOrdersStatusRequest) (*UpdateOrdersStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrdersStatus not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
@@ -172,6 +188,24 @@ func _OrderService_AuditLogOrderBatchCreate_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_UpdateOrdersStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrdersStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).UpdateOrdersStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_UpdateOrdersStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).UpdateOrdersStatus(ctx, req.(*UpdateOrdersStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuditLogOrderBatchCreate",
 			Handler:    _OrderService_AuditLogOrderBatchCreate_Handler,
+		},
+		{
+			MethodName: "UpdateOrdersStatus",
+			Handler:    _OrderService_UpdateOrdersStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
