@@ -8,5 +8,6 @@ import (
 
 type OrderRepository interface {
 	BulkInsert(ctx context.Context, orders []models.V1OrderDal) ([]models.V1OrderDal, error)
+	BulkUpdate(ctx context.Context, orders []models.V1OrderDal) ([]models.V1OrderDal, error)
 	Query(ctx context.Context, query models.QueryOrdersDalModel) ([]models.V1OrderDal, error)
 }

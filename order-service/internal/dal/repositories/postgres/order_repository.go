@@ -74,6 +74,64 @@ func (r *OrderRepository) BulkInsert(ctx context.Context, orders []models.V1Orde
 	return result, rows.Err()
 }
 
+func (r *OrderRepository) BulkUpdate(ctx context.Context, orders []models.V1OrderDal) ([]models.V1OrderDal, error) {
+	conn, err := r.uow.GetConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sql := `
+		update orders o
+		set
+			customer_id = u.customer_id,
+			delivery_address = u.delivery_address,
+			total_price_cents = u.total_price_cents,
+			total_price_currency = u.total_price_currency,
+			updated_at = u.updated_at,
+			status = u.status
+		from (
+			select
+				(x).id,
+				(x).customer_id,
+				(x).delivery_address,
+				(x).total_price_cents,
+				(x).total_price_currency,
+				(x).updated_at,
+				(x).status
+			from unnest($1::v1_order[]) as x
+		) as u
+		where o.id = u.id
+		returning
+			o.id,
+			o.customer_id,
+			o.delivery_address,
+			o.total_price_cents,
+			o.total_price_currency,
+			o.created_at,
+			o.updated_at,
+			o.status;
+	`
+
+	rows, err := conn.Conn().Query(ctx, sql, orders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []models.V1OrderDal
+	for rows.Next() {
+		var o models.V1OrderDal
+		if err := rows.Scan(&o.ID, &o.CustomerID, &o.DeliveryAddress, &o.TotalPriceCents,
+			&o.TotalPriceCurr, &o.CreatedAt, &o.UpdatedAt, &o.Status,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, o)
+	}
+
+	return result, rows.Err()
+}
+
 func (r *OrderRepository) Query(ctx context.Context, q models.QueryOrdersDalModel) ([]models.V1OrderDal, error) {
 	conn, err := r.uow.GetConn(ctx)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/utils"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -97,7 +98,28 @@ func (s *OrderService) QueryOrders(ctx context.Context, req *pb.QueryOrdersReque
 }
 
 func (s *OrderService) UpdateOrdersStatus(ctx context.Context, req *pb.UpdateOrdersStatusRequest) (*pb.UpdateOrdersStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrdersStatus not implemented")
+	l := s.log.With("op", "update_orders_status")
+	l.Infow("order_controller.update_orders_status_start")
+
+	if errs := validators.ValidateUpdateOrdersStatusRequest(req); errs != nil {
+		l.Errorw("order_controller.update_orders_status_request_validation_failed", "err", errs)
+		return nil, errs.ToStatus()
+	}
+
+	orderSvc := s.createBllOrderService(l)
+	defer orderSvc.UnitOfWork().Close()
+
+	_, err := orderSvc.UpdateOrdersStatus(ctx, req.OrderIds, models.OrderStatus(req.NewStatus))
+	if err != nil {
+		l.Errorw("order_controller.update_orders_status_failed", "err", err)
+		if utils.IsGrpcError(err) {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Internal, "Internal server error")
+	}
+
+	l.Infow("order_controller.update_orders_status_success")
+	return &pb.UpdateOrdersStatusResponse{}, nil
 }
 
 func (s *OrderService) AuditLogOrderBatchCreate(ctx context.Context, req *pb.AuditLogOrderBatchCreateRequest) (*pb.AuditLogOrderBatchCreateResponse, error) {

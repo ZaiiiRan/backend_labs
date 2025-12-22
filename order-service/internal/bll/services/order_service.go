@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
@@ -10,6 +11,7 @@ import (
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
 	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"go.uber.org/zap"
 )
 
@@ -114,6 +116,56 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 
 	s.log.Infow("order_service.batch_insert_success", "inserted_orders_count", len(result))
 	return result, nil
+}
+
+func (s *OrderService) UpdateOrdersStatus(ctx context.Context, orderIds []int64, newStatus bll.OrderStatus) ([]bll.OrderUnit, error) {
+	now := time.Now().UTC()
+	s.log.Infow("order_service.update_orders_status_start", "order_ids", orderIds, "new_status", newStatus)
+
+	ordersDal, err := s.orderRepo.Query(ctx, dal.QueryOrdersDalModel{
+		IDs:    orderIds,
+		Limit:  len(orderIds),
+		Offset: 0,
+	})
+	if err != nil {
+		s.log.Errorw("order_service.query_orders_failed", "err", err)
+		return nil, err
+	}
+	if len(ordersDal) == 0 {
+		s.log.Infow("order_service.update_orders_status_success", "updated_orders_count", 0)
+		return []bll.OrderUnit{}, nil
+	}
+
+	var orders []bll.OrderUnit
+	errs := make(validators.ValidationErrors)
+	for _, o := range ordersDal {
+		order := mappers.DalOrderToBll(o, nil)
+
+		if !order.Status.CanTransition(newStatus) {
+			errs[fmt.Sprintf("orders[%d]", order.ID)] = fmt.Sprintf("invalid transition from %s to %s", order.Status, newStatus)
+		} else {
+			order.Status = newStatus
+		}
+		order.UpdatedAt = now
+		orders = append(orders, order)
+	}
+	if len(errs) > 0 {
+		s.log.Warnw("order_service.update_orders_status_failed", "errs", errs)
+		return nil, errs.ToStatus()
+	}
+
+	var updatedOrdersDal []dal.V1OrderDal
+	for _, o := range orders {
+		updatedOrdersDal = append(updatedOrdersDal, mappers.BllOrderToDal(o))
+	}
+	_, err = s.orderRepo.BulkUpdate(ctx, updatedOrdersDal)
+	if err != nil {
+		s.log.Errorw("order_service.bulk_update_order_failed", "err", err)
+		return nil, err
+	}
+
+	s.log.Infow("order_service.update_orders_status_success", "updated_orders_count", len(orders))
+	return orders, nil
 }
 
 func (s *OrderService) GetOrders(ctx context.Context, query bll.QueryOrderItemsModel) ([]bll.OrderUnit, error) {
