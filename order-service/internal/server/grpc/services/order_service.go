@@ -44,7 +44,9 @@ func (s *OrderService) BatchCreate(ctx context.Context, req *pb.BatchCreateReque
 
 	var orders []models.OrderUnit
 	for _, o := range req.Orders {
-		orders = append(orders, mappers.PbOrderToBll(o))
+		order := mappers.PbOrderToBll(o)
+		order.Status = models.ORDER_STATUS_CREATED
+		orders = append(orders, order)
 	}
 
 	orderSvc := s.createBllOrderService(l)

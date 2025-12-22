@@ -8,6 +8,7 @@ type V1OrderDal struct {
 	DeliveryAddress string    `db:"delivery_address"`
 	TotalPriceCents int64     `db:"total_price_cents"`
 	TotalPriceCurr  string    `db:"total_price_currency"`
+	Status          string    `db:"status"`
 	CreatedAt       time.Time `db:"created_at"`
 	UpdatedAt       time.Time `db:"updated_at"`
 }
@@ -29,6 +30,8 @@ func (o V1OrderDal) Index(i int) any {
 		return o.CreatedAt
 	case 6:
 		return o.UpdatedAt
+	case 7:
+		return o.Status
 	default:
 		return nil
 	}

@@ -11,4 +11,5 @@ type OrderUnit struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	OrderItems      []OrderItemUnit
+	Status          OrderStatus
 }

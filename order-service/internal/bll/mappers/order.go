@@ -18,6 +18,7 @@ func DalOrderToBll(o dal.V1OrderDal, items []bll.OrderItemUnit) bll.OrderUnit {
 		CreatedAt:       o.CreatedAt,
 		UpdatedAt:       o.UpdatedAt,
 		OrderItems:      items,
+		Status:          bll.StringToOrderStatus(o.Status),
 	}
 }
 
@@ -30,6 +31,7 @@ func BllOrderToDal(o bll.OrderUnit) dal.V1OrderDal {
 		TotalPriceCurr:  o.TotalPriceCurr,
 		CreatedAt:       o.CreatedAt.UTC(),
 		UpdatedAt:       o.UpdatedAt.UTC(),
+		Status:          o.Status.String(),
 	}
 }
 

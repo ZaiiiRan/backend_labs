@@ -31,7 +31,8 @@ func (r *OrderRepository) BulkInsert(ctx context.Context, orders []models.V1Orde
 			total_price_cents,
 			total_price_currency,
 			created_at,
-			updated_at
+			updated_at,
+			status
 		)
 		select 
 			(o).customer_id,
@@ -39,7 +40,8 @@ func (r *OrderRepository) BulkInsert(ctx context.Context, orders []models.V1Orde
 			(o).total_price_cents,
 			(o).total_price_currency,
 			(o).created_at,
-			(o).updated_at
+			(o).updated_at,
+			(o).status
 		from unnest($1::v1_order[]) as o
 		returning 
 			id,
@@ -48,7 +50,8 @@ func (r *OrderRepository) BulkInsert(ctx context.Context, orders []models.V1Orde
 			total_price_cents,
 			total_price_currency,
 			created_at,
-			updated_at;
+			updated_at,
+			status;
 	`
 
 	rows, err := conn.Conn().Query(ctx, sql, orders)
@@ -61,7 +64,7 @@ func (r *OrderRepository) BulkInsert(ctx context.Context, orders []models.V1Orde
 	for rows.Next() {
 		var o models.V1OrderDal
 		if err := rows.Scan(&o.ID, &o.CustomerID, &o.DeliveryAddress, &o.TotalPriceCents,
-			&o.TotalPriceCurr, &o.CreatedAt, &o.UpdatedAt,
+			&o.TotalPriceCurr, &o.CreatedAt, &o.UpdatedAt, &o.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -91,7 +94,8 @@ func (r *OrderRepository) Query(ctx context.Context, q models.QueryOrdersDalMode
 			total_price_cents,
 			total_price_currency,
 			created_at,
-			updated_at
+			updated_at,
+			status
 		from orders
 	`)
 
@@ -131,7 +135,7 @@ func (r *OrderRepository) Query(ctx context.Context, q models.QueryOrdersDalMode
 		var o models.V1OrderDal
 		if err := rows.Scan(
 			&o.ID, &o.CustomerID, &o.DeliveryAddress, &o.TotalPriceCents,
-			&o.TotalPriceCurr, &o.CreatedAt, &o.UpdatedAt,
+			&o.TotalPriceCurr, &o.CreatedAt, &o.UpdatedAt, &o.Status,
 		); err != nil {
 			return nil, err
 		}
