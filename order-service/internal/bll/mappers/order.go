@@ -50,6 +50,7 @@ func PbOrderToBll(o *pb.Order) bll.OrderUnit {
 		CreatedAt:       o.CreatedAt.AsTime(),
 		UpdatedAt:       o.UpdatedAt.AsTime(),
 		OrderItems:      items,
+		Status:          bll.StringToOrderStatus(o.Status),
 	}
 }
 
@@ -71,6 +72,7 @@ func BllOrderToPb(o bll.OrderUnit) *pb.Order {
 		CreatedAt:          createdAt,
 		UpdatedAt:          updatedAt,
 		OrderItems:         items,
+		Status:             o.Status.String(),
 	}
 }
 
