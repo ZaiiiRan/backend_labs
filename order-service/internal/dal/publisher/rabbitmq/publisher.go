@@ -37,7 +37,7 @@ func (p *Publisher) PublishBatch(ctx context.Context, messages []messages.Messag
 		return nil
 	}
 
-	if err := p.configure(ctx); err != nil {
+	if err := p.configure(); err != nil {
 		return err
 	}
 
@@ -72,7 +72,7 @@ func (p *Publisher) Close() {
 	}
 }
 
-func (p *Publisher) configure(ctx context.Context) error {
+func (p *Publisher) configure() error {
 	var err error
 
 	p.onceSetup.Do(func() {
@@ -96,13 +96,23 @@ func (p *Publisher) configure(ctx context.Context) error {
 		}
 
 		for _, m := range p.cfg.ExchangeMappings {
+			var args amqp.Table
+			if m.DeadLetterSettings != nil {
+				args = amqp.Table{
+					"x-dead-letter-exchange":    m.DeadLetterSettings.Dlx,
+					"x-dead-letter-routing-key": m.DeadLetterSettings.RoutingKey,
+				}
+			} else {
+				args = nil
+			}
+
 			_, e := p.ch.QueueDeclare(
 				m.Queue,
 				false,
 				false,
 				false,
 				false,
-				nil,
+				args,
 			)
 			if e != nil {
 				err = fmt.Errorf("queue declare %s: %w", m.Queue, e)

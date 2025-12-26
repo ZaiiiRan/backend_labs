@@ -12,12 +12,20 @@ OmsPublisherSettings:
   ExchangeMappings:
     - Queue: oms.order.created
       RoutingKeyPattern: order.created
+      DeadLetterSettings:
+        Dlx: oms.order.dlx
+        RoutingKey: order.created
     - Queue: oms.order.status.changed
       RoutingKeyPattern: order.status.changed
+      DeadLetterSettings:
+        Dlx: oms.order.dlx
+        RoutingKey: order.status.changed
     - Queue: public.oms.order.created
       RoutingKeyPattern: order.created
     - Queue: public.oms.order.status.changed
       RoutingKeyPattern: order.status.changed
+    - Queue: oms.logs
+      RoutingKeyPattern: order.*
 
 HttpServerSettings:
   Port: 5000

@@ -7,6 +7,7 @@ type RabbitMqPublisherSettings struct {
 }
 
 type RabbitMqExchangeMapping struct {
-	Queue             string `mapstructure:"Queue"`
-	RoutingKeyPattern string `mapstructure:"RoutingKeyPattern"`
+	Queue              string                      `mapstructure:"Queue"`
+	RoutingKeyPattern  string                      `mapstructure:"RoutingKeyPattern"`
+	DeadLetterSettings *RabbitMqDeadLetterSettings `mapstructure:"DeadLetterSettings"`
 }

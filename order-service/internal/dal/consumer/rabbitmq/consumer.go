@@ -114,16 +114,8 @@ func (c *Consumer) consume() error {
 		return fmt.Errorf("set qos: %w", err)
 	}
 
-	_, err := c.ch.QueueDeclare(
-		c.cfg.Queue,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("queue declare: %w", err)
+	if err := c.declareQueues(); err != nil {
+		return err
 	}
 
 	msgs, err := c.ch.Consume(
@@ -172,6 +164,59 @@ func (c *Consumer) consume() error {
 	}
 }
 
+func (c *Consumer) declareQueues() error {
+	if err := c.ch.ExchangeDeclare(
+		c.cfg.DeadLetterSettings.Dlx,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("declare dlx: %w", err)
+	}
+
+	if _, err := c.ch.QueueDeclare(
+		c.cfg.DeadLetterSettings.Dlq,
+		true,
+		false,
+		false,
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("declare dlq: %w", err)
+	}
+
+	if err := c.ch.QueueBind(
+		c.cfg.DeadLetterSettings.Dlq,
+		c.cfg.DeadLetterSettings.RoutingKey,
+		c.cfg.DeadLetterSettings.Dlx,
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("bind dlq: %w", err)
+	}
+
+	queueArgs := amqp.Table{
+		"x-dead-letter-exchange":    c.cfg.DeadLetterSettings.Dlx,
+		"x-dead-letter-routing-key": c.cfg.DeadLetterSettings.RoutingKey,
+	}
+
+	if _, err := c.ch.QueueDeclare(
+		c.cfg.Queue,
+		false,
+		false,
+		false,
+		false,
+		queueArgs,
+	); err != nil {
+		return fmt.Errorf("declare main queue: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Consumer) handleMessage(msg amqp.Delivery) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -208,7 +253,7 @@ func (c *Consumer) processBatch(trigger string) {
 	if err != nil {
 		c.log.Errorw("consumer.process_failed", "queue", c.cfg.Queue, "err", err, "need_requeue", requeue)
 		last := batch[len(batch)-1]
-		c.nack(last.DeliveryTag, true, requeue)
+		c.nack(last.DeliveryTag, true, false)
 		return
 	}
 
