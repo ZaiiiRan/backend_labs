@@ -10,12 +10,14 @@ import (
 )
 
 type Generator struct {
-	client *grpcclient.OmsGrpcClient
+	client      *grpcclient.OmsGrpcClient
+	customerIDs []int64
 }
 
-func NewGenerator(client *grpcclient.OmsGrpcClient) *Generator {
+func NewGenerator(client *grpcclient.OmsGrpcClient, customerIDs []int64) *Generator {
 	return &Generator{
-		client: client,
+		client:      client,
+		customerIDs: customerIDs,
 	}
 }
 
@@ -48,7 +50,7 @@ func (g *Generator) generateOrder(ctx context.Context) {
 		}
 
 		order := &pb.Order{
-			CustomerId:         rand.Int63n(1000),
+			CustomerId:         g.randomCustomerID(),
 			DeliveryAddress:    "г. Краснодар, ул. " + randomString(6),
 			TotalPriceCents:    1000,
 			TotalPriceCurrency: "RUB",
@@ -101,4 +103,8 @@ func randomString(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func (g *Generator) randomCustomerID() int64 {
+	return g.customerIDs[rand.Intn(len(g.customerIDs))]
 }

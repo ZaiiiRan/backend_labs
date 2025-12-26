@@ -1,12 +1,12 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25-bookworm AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
+RUN apt-get update && apt-get install -y \
     librdkafka-dev \
-    pkgconf
+    pkg-config \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -17,11 +17,13 @@ RUN go build -o server ./cmd/web-api/main.go
 RUN go build -o migrate ./cmd/migrate/main.go
 RUN go build -o consumer ./cmd/consumer/main.go
 
-FROM alpine:latest
+FROM debian:bookworm-slim
 
 WORKDIR /root
 
-RUN apk add --no-cache librdkafka
+RUN apt-get update && apt-get install -y \
+    librdkafka1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrate .
@@ -29,22 +31,5 @@ COPY --from=builder /app/consumer .
 
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/gen/openapiv2/order-service/v1/ ./gen/openapiv2/order-service/v1/
-
-# COPY <<EOF /entrypoint.sh
-# #!/bin/sh
-# set -e
-
-# echo "RUN_MIGRATIONS='$$RUN_MIGRATIONS'"
-
-# if [ "$$RUN_MIGRATIONS" = "true" ]; then
-#     echo "Running migrations..."
-#     ./migrate
-# fi
-
-# echo "Starting server..."
-# exec ./server
-# EOF
-
-# RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENTRYPOINT ["./server"]

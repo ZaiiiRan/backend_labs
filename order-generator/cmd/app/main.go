@@ -24,7 +24,9 @@ func main() {
 	}
 	defer client.Close()
 
-	gen := generator.NewGenerator(client)
+	customerIDs := []int64{1, 2, 3, 4, 5}
+
+	gen := generator.NewGenerator(client, customerIDs)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
