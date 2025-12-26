@@ -62,14 +62,26 @@ func (g *Generator) generateOrder(ctx context.Context) {
 
 	resp, err := g.client.BatchCreate(ctx, req)
 	if err == nil {
-		g.UpdateOrdersStatus(ctx, resp.Orders)
+		g.UpdateOrdersStatusRandom(ctx, resp.Orders)
 	}
 }
 
-func (g *Generator) UpdateOrdersStatus(ctx context.Context, orders []*pb.Order) error {
-	ids := make([]int64, 0, len(orders))
-	for _, order := range orders {
-		ids = append(ids, order.Id)
+func (g *Generator) UpdateOrdersStatusRandom(ctx context.Context, orders []*pb.Order) error {
+	if len(orders) == 0 {
+		return nil
+	}
+
+	k := rand.Intn(len(orders)) + 1
+
+	shuffled := make([]*pb.Order, len(orders))
+	copy(shuffled, orders)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+
+	ids := make([]int64, 0, k)
+	for i := range k {
+		ids = append(ids, shuffled[i].Id)
 	}
 
 	req := &pb.UpdateOrdersStatusRequest{
