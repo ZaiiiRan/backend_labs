@@ -128,6 +128,7 @@ message Order {
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
     repeated OrderItem order_items = 8;
+    string status = 9;
 }
 
 message BatchCreateRequest {

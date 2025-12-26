@@ -303,6 +303,9 @@
             "type": "object",
             "$ref": "#/definitions/v1OrderItem"
           }
+        },
+        "status": {
+          "type": "string"
         }
       }
     },

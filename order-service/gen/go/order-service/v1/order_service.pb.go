@@ -150,6 +150,7 @@ type Order struct {
 	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	OrderItems         []*OrderItem           `protobuf:"bytes,8,rep,name=order_items,json=orderItems,proto3" json:"order_items,omitempty"`
+	Status             string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -238,6 +239,13 @@ func (x *Order) GetOrderItems() []*OrderItem {
 		return x.OrderItems
 	}
 	return nil
+}
+
+func (x *Order) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
 }
 
 type BatchCreateRequest struct {
@@ -737,7 +745,7 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xa8\x03\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xc0\x03\n" +
 	"\x05Order\x12\x1f\n" +
 	"\x02id\x18\x01 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\x02id\x120\n" +
 	"\vcustomer_id\x18\x02 \x01(\x03B\x0f\x92A\f\x9a\x02\x01\x03\xa2\x02\x05int64R\n" +
@@ -750,7 +758,8 @@ const file_order_service_v1_order_service_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12<\n" +
 	"\vorder_items\x18\b \x03(\v2\x1b.order_service.v1.OrderItemR\n" +
-	"orderItems\"E\n" +
+	"orderItems\x12\x16\n" +
+	"\x06status\x18\t \x01(\tR\x06status\"E\n" +
 	"\x12BatchCreateRequest\x12/\n" +
 	"\x06orders\x18\x01 \x03(\v2\x17.order_service.v1.OrderR\x06orders\"F\n" +
 	"\x13BatchCreateResponse\x12/\n" +
