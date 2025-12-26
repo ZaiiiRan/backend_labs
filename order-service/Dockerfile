@@ -2,6 +2,12 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    librdkafka-dev \
+    pkgconf
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -14,6 +20,8 @@ RUN go build -o consumer ./cmd/consumer/main.go
 FROM alpine:latest
 
 WORKDIR /root
+
+RUN apk add --no-cache librdkafka
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrate .
