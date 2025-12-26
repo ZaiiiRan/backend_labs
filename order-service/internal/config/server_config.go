@@ -9,10 +9,10 @@ import (
 )
 
 type ServerConfig struct {
-	DbSettings                            settings.DbSettings                `mapstructure:"DbSettings"`
-	OrderCreatedRabbitMqPublisherSettings settings.RabbitMqPublisherSettings `mapstructure:"OrderCreatedPublisherSettings"`
-	Http                                  settings.HttpServerSettings        `mapstructure:"HttpServerSettings"`
-	Grpc                                  settings.GrpcServerSettings        `mapstructure:"GrpcServerSettings"`
+	DbSettings                   settings.DbSettings                `mapstructure:"DbSettings"`
+	OmsRabbitMqPublisherSettings settings.RabbitMqPublisherSettings `mapstructure:"OmsPublisherSettings"`
+	Http                         settings.HttpServerSettings        `mapstructure:"HttpServerSettings"`
+	Grpc                         settings.GrpcServerSettings        `mapstructure:"GrpcServerSettings"`
 }
 
 func LoadServerConfig() (*ServerConfig, error) {
@@ -45,9 +45,9 @@ func LoadServerConfig() (*ServerConfig, error) {
 }
 
 func setDefaultServerConfigValues(v *viper.Viper) {
-	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.HeartbeatSeconds", 30)
-	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
-	v.SetDefault("OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
+	v.SetDefault("OmsRabbitMqPublisherSettings.RabbitMqSettings.HeartbeatSeconds", 30)
+	v.SetDefault("OmsRabbitMqPublisherSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
+	v.SetDefault("OmsRabbitMqPublisherSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
 	v.SetDefault("HttpServerSettings.Port", 5000)
 	v.SetDefault("GrpcServerSettings.Port", 50051)
 }

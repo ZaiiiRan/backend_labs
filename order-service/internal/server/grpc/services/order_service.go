@@ -23,13 +23,13 @@ type OrderService struct {
 
 	log                   *zap.SugaredLogger
 	pgClient              *postgres.PostgresClient
-	orderCreatedPublisher *publisher.Publisher
+	omsPublisher *publisher.Publisher
 }
 
-func NewOrderService(pgClient *postgres.PostgresClient, orderCreatedPublisher *publisher.Publisher, log *zap.SugaredLogger) *OrderService {
+func NewOrderService(pgClient *postgres.PostgresClient, omsPublisher *publisher.Publisher, log *zap.SugaredLogger) *OrderService {
 	return &OrderService{
 		pgClient:              pgClient,
-		orderCreatedPublisher: orderCreatedPublisher,
+		omsPublisher: omsPublisher,
 		log:                   log,
 	}
 }
@@ -159,7 +159,7 @@ func (s *OrderService) createBllOrderService(log *zap.SugaredLogger) *bllService
 	uow := unitofwork.New(s.pgClient)
 	orderRepo := repositories.NewOrderRepository(uow)
 	orderItemRepo := repositories.NewOrderItemRepository(uow)
-	return bllServices.NewOrderService(uow, orderRepo, orderItemRepo, s.orderCreatedPublisher, log)
+	return bllServices.NewOrderService(uow, orderRepo, orderItemRepo, s.omsPublisher, log)
 }
 
 func (s *OrderService) createBllAuditLogOrderService(log *zap.SugaredLogger) *bllServices.AuditLogOrderService {

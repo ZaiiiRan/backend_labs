@@ -25,7 +25,7 @@ type OmsApp struct {
 	postgresClient *postgres.PostgresClient
 	rabbitmqClient *rabbitmq.RabbitMqClient
 
-	orderCreatedPublisher *publisher.Publisher
+	omsPublisher *publisher.Publisher
 
 	orderService *services.OrderService
 
@@ -77,9 +77,9 @@ func (a *OmsApp) Stop(ctx context.Context) {
 	defer cancel()
 
 	a.postgresClient.Close()
-	a.orderCreatedPublisher.Close()
+	a.omsPublisher.Close()
 	a.rabbitmqClient.Close()
-	// a.httpServer.Stop(shCtx)
+	
 	a.grpcServer.Stop(shCtx)
 	a.grpcGateway.Stop(shCtx)
 
@@ -97,7 +97,7 @@ func (a *OmsApp) initPostgresClient(ctx context.Context) error {
 }
 
 func (a *OmsApp) initRabbitMqClient() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderCreatedRabbitMqPublisherSettings.RabbitMqSettings)
+	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OmsRabbitMqPublisherSettings.RabbitMqSettings)
 	if err != nil {
 		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
 	}
@@ -106,17 +106,17 @@ func (a *OmsApp) initRabbitMqClient() error {
 }
 
 func (a *OmsApp) initPublishers() error {
-	orderCreatedPublisher, err := publisher.NewPublisher(&a.cfg.OrderCreatedRabbitMqPublisherSettings, a.rabbitmqClient)
+	orderCreatedPublisher, err := publisher.NewPublisher(&a.cfg.OmsRabbitMqPublisherSettings, a.rabbitmqClient)
 	if err != nil {
 		a.log.Errorw("app.create_order_created_publisher_failed", "err", err)
 		return err
 	}
-	a.orderCreatedPublisher = orderCreatedPublisher
+	a.omsPublisher = orderCreatedPublisher
 	return nil
 }
 
 func (a *OmsApp) initOrderService() {
-	a.orderService = services.NewOrderService(a.postgresClient, a.orderCreatedPublisher, a.log)
+	a.orderService = services.NewOrderService(a.postgresClient, a.omsPublisher, a.log)
 }
 
 func (a *OmsApp) initGrpcServer() error {

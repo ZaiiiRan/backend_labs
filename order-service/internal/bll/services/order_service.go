@@ -12,6 +12,7 @@ import (
 	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +20,7 @@ type OrderService struct {
 	uow                   *unitofwork.UnitOfWork
 	orderRepo             interfaces.OrderRepository
 	orderItemRepo         interfaces.OrderItemRepository
-	orderCreatedPublisher *publisher.Publisher
+	omsPublisher *publisher.Publisher
 	log                   *zap.SugaredLogger
 }
 
@@ -27,14 +28,14 @@ func NewOrderService(
 	uow *unitofwork.UnitOfWork,
 	orderRepo interfaces.OrderRepository,
 	orderItemRepo interfaces.OrderItemRepository,
-	orderCreatedPublisher *publisher.Publisher,
+	omsPublisher *publisher.Publisher,
 	log *zap.SugaredLogger,
 ) *OrderService {
 	return &OrderService{
 		uow:                   uow,
 		orderRepo:             orderRepo,
 		orderItemRepo:         orderItemRepo,
-		orderCreatedPublisher: orderCreatedPublisher,
+		omsPublisher: omsPublisher,
 		log:                   log,
 	}
 }
@@ -101,7 +102,7 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 	}
 
 	go func() {
-		var msgs []any
+		var msgs []messages.Message
 		for _, o := range result {
 			msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
 		}
@@ -109,8 +110,8 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 		ctxPub, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := s.orderCreatedPublisher.PublishBatch(ctxPub, msgs); err != nil {
-			s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err, "lost_msgs", msgs)
+		if err := s.omsPublisher.PublishBatch(ctxPub, msgs); err != nil {
+			s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err)
 		}
 	}()
 
@@ -163,6 +164,25 @@ func (s *OrderService) UpdateOrdersStatus(ctx context.Context, orderIds []int64,
 		s.log.Errorw("order_service.bulk_update_order_failed", "err", err)
 		return nil, err
 	}
+
+	go func() {
+		var msgs []messages.Message
+		for _, o := range orders {
+			msg := &messages.OrderStatusChangedMessage{
+				OrderId:     o.ID,
+				OrderStatus: o.Status.String(),
+				CustomerId:  o.CustomerID,
+			}
+			msgs = append(msgs, msg)
+		}
+
+		ctxPub, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.omsPublisher.PublishBatch(ctxPub, msgs); err != nil {
+			s.log.Errorw("order_service.publish_order_status_changed_messages_failed", "err", err)
+		}
+	}()
 
 	s.log.Infow("order_service.update_orders_status_success", "updated_orders_count", len(orders))
 	return orders, nil

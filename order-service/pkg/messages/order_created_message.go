@@ -12,3 +12,7 @@ type OrderCreatedMessage struct {
 	UpdatedAt       time.Time                 `json:"updated_at"`
 	OrderItems      []OrderCreatedItemMessage `json:"order_items"`
 }
+
+func (m *OrderCreatedMessage) RoutingKey() string {
+	return "order.created"
+}

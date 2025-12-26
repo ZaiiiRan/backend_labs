@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"net/url"
+	"sync"
 	"time"
 
 	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
@@ -12,6 +13,7 @@ import (
 type RabbitMqClient struct {
 	cfg  *config.RabbitMqSettings
 	conn *amqp.Connection
+	mu   sync.Mutex
 }
 
 func NewRabbitMqClient(cfg *config.RabbitMqSettings) (*RabbitMqClient, error) {
@@ -42,6 +44,9 @@ func (c *RabbitMqClient) Close() {
 }
 
 func (c *RabbitMqClient) connect() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	vhost := url.PathEscape(c.cfg.VHost)
 	dsn := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
 		c.cfg.User,

@@ -4,17 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+	"sync"
 
 	config "github.com/ZaiiiRan/backend_labs/order-service/internal/config/settings"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Publisher struct {
 	client *rabbitmq.RabbitMqClient
 	cfg    *config.RabbitMqPublisherSettings
-	ch     *amqp.Channel
+
+	ch        *amqp.Channel
+	onceSetup sync.Once
 }
 
 func NewPublisher(cfg *config.RabbitMqPublisherSettings, client *rabbitmq.RabbitMqClient) (*Publisher, error) {
@@ -29,34 +32,16 @@ func NewPublisher(cfg *config.RabbitMqPublisherSettings, client *rabbitmq.Rabbit
 	}, nil
 }
 
-func (p *Publisher) PublishBatch(ctx context.Context, payloads []any) error {
-	if len(payloads) == 0 {
+func (p *Publisher) PublishBatch(ctx context.Context, messages []messages.Message) error {
+	if len(messages) == 0 {
 		return nil
 	}
 
-	if err := p.ensureChannel(); err != nil {
+	if err := p.configure(ctx); err != nil {
 		return err
 	}
 
-	_, err := p.ch.QueueDeclare(
-		p.cfg.Queue,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("queue declare: %w", err)
-	}
-
-	if _, ok := ctx.Deadline(); !ok {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-	}
-
-	for _, msg := range payloads {
+	for _, msg := range messages {
 		body, err := json.Marshal(msg)
 		if err != nil {
 			return fmt.Errorf("msg json marshal: %w", err)
@@ -64,8 +49,8 @@ func (p *Publisher) PublishBatch(ctx context.Context, payloads []any) error {
 
 		err = p.ch.PublishWithContext(
 			ctx,
-			"",
-			p.cfg.Queue,
+			p.cfg.Exchange,
+			msg.RoutingKey(),
 			false,
 			false,
 			amqp.Publishing{
@@ -87,13 +72,68 @@ func (p *Publisher) Close() {
 	}
 }
 
-func (p *Publisher) ensureChannel() error {
-	if p.ch == nil || p.ch.IsClosed() {
-		ch, err := p.client.Channel()
+func (p *Publisher) configure(ctx context.Context) error {
+	var err error
+
+	p.onceSetup.Do(func() {
+		err = p.ensureChannel()
 		if err != nil {
-			return fmt.Errorf("reopen channel: %w", err)
+			return
 		}
-		p.ch = ch
+
+		err = p.ch.ExchangeDeclare(
+			p.cfg.Exchange,
+			"topic",
+			false,
+			false,
+			false,
+			false,
+			nil,
+		)
+		if err != nil {
+			err = fmt.Errorf("exchange declare: %w", err)
+			return
+		}
+
+		for _, m := range p.cfg.ExchangeMappings {
+			_, e := p.ch.QueueDeclare(
+				m.Queue,
+				false,
+				false,
+				false,
+				false,
+				nil,
+			)
+			if e != nil {
+				err = fmt.Errorf("queue declare %s: %w", m.Queue, e)
+				return
+			}
+
+			e = p.ch.QueueBind(
+				m.Queue,
+				m.RoutingKeyPattern,
+				p.cfg.Exchange,
+				false,
+				nil,
+			)
+			if e != nil {
+				err = fmt.Errorf("queue bind %s: %w", m.Queue, e)
+				return
+			}
+		}
+	})
+
+	return err
+}
+
+func (p *Publisher) ensureChannel() error {
+	if p.ch != nil && !p.ch.IsClosed() {
+		return nil
 	}
+	ch, err := p.client.Channel()
+	if err != nil {
+		return err
+	}
+	p.ch = ch
 	return nil
 }

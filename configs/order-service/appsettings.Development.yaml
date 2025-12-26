@@ -2,13 +2,22 @@ DbSettings:
   MigrationConnectionString: postgres://user:mypassword@order-pgbouncer:6432/postgres?sslmode=disable
   ConnectionString: postgres://user:mypassword@order-pgbouncer:6432/postgres?sslmode=disable
 
-OrderCreatedPublisherSettings:
+OmsPublisherSettings:
   RabbitMqSettings:
     Host: order-rabbitmq
     Port: 5672
     User: user
     Password: mypassword
-  Queue: oms.order.created
+  Exchange: oms
+  ExchangeMappings:
+    - Queue: oms.order.created
+      RoutingKeyPattern: order.created
+    - Queue: oms.order.status.changed
+      RoutingKeyPattern: order.status.changed
+    - Queue: public.oms.order.created
+      RoutingKeyPattern: order.created
+    - Queue: public.oms.order.status.changed
+      RoutingKeyPattern: order.status.changed
 
 HttpServerSettings:
   Port: 5000
