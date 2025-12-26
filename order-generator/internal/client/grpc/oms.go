@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	config "github.com/ZaiiiRan/backend_labs/order-generator/internal/config/settings"
+	pb "github.com/ZaiiiRan/backend_labs/order-service/gen/go/order-service/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -43,6 +43,18 @@ func (c *OmsGrpcClient) BatchCreate(ctx context.Context, req *pb.BatchCreateRequ
 	resp, err := c.client.BatchCreate(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("grpc call BatchCreate failed: %w", err)
+	}
+
+	return resp, nil
+}
+
+func (c *OmsGrpcClient) UpdateOrderStatus(ctx context.Context, req *pb.UpdateOrdersStatusRequest) (*pb.UpdateOrdersStatusResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	resp, err := c.client.UpdateOrdersStatus(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("grpc call UpdateOrderStatus failed: %w", err)
 	}
 
 	return resp, nil

@@ -1,5 +1,7 @@
 github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251022040612-b8173d33afcd h1:w8h1OpBYQFzmLw9EOoFBo9Ia8V47OgbEh/aea9IdzVY=
 github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251022040612-b8173d33afcd/go.mod h1:8CaYKfuxYbvNDCk1keAuax4KRi6WRLnXapOygs/VYDU=
+github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251226185705-bd67f5aece3d h1:1n/gTSoLIVBirEsYwZe70ZIJ5jZgyiaUND1mkGnL+3A=
+github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251226185705-bd67f5aece3d/go.mod h1:8CaYKfuxYbvNDCk1keAuax4KRi6WRLnXapOygs/VYDU=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=

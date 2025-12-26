@@ -9,10 +9,10 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	grpcclient "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
 	dalconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer"
+	"github.com/ZaiiiRan/backend_labs/order-service/internal/utils"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type OrderCreatedMessageProcessor struct {
@@ -56,7 +56,7 @@ func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch
 		p.log.Errorw("order_created_message_processor.grpc_call_failed", "err", err)
 
 		needToRequeue := false
-		st, err := getGrpcErrStatus(err)
+		st, err := utils.GetGrpcErrStatus(err)
 		if err != nil || st.Code() != codes.InvalidArgument {
 			needToRequeue = true
 		}
@@ -66,12 +66,4 @@ func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch
 
 	p.log.Infow("order_created_message_processor.batch_processed", "count", len(orders))
 	return false, nil
-}
-
-func getGrpcErrStatus(err error) (*status.Status, error) {
-	st, ok := status.FromError(err)
-	if !ok {
-		return nil, fmt.Errorf("not a grpc error: %w", err)
-	}
-	return st, nil
 }

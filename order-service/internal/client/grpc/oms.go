@@ -47,3 +47,15 @@ func (c *OmsGrpcClient) LogOrder(ctx context.Context, req *pb.AuditLogOrderBatch
 
 	return resp, nil
 }
+
+func (c *OmsGrpcClient) QueryOrders(ctx context.Context, req *pb.QueryOrdersRequest) (*pb.QueryOrdersResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	resp, err := c.client.QueryOrders(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	
+	return resp, nil
+}

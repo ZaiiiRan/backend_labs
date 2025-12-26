@@ -8,5 +8,15 @@ OrderCreatedConsumerSettings:
   BatchSize: 100
   BatchTimeoutSeconds: 1
 
+OrderStatusChangedConsumerSettings:
+  RabbitMqSettings:
+    Host: order-rabbitmq
+    Port: 5672
+    User: user
+    Password: mypassword
+  Queue: oms.order.status.changed
+  BatchSize: 100
+  BatchTimeoutSeconds: 1
+
 OmsGrpcClient:
   Address: order-service:50051

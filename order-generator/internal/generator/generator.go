@@ -60,7 +60,25 @@ func (g *Generator) generateOrder(ctx context.Context) {
 
 	req := &pb.BatchCreateRequest{Orders: orders}
 
-	g.client.BatchCreate(ctx, req)
+	resp, err := g.client.BatchCreate(ctx, req)
+	if err == nil {
+		g.UpdateOrdersStatus(ctx, resp.Orders)
+	}
+}
+
+func (g *Generator) UpdateOrdersStatus(ctx context.Context, orders []*pb.Order) error {
+	ids := make([]int64, 0, len(orders))
+	for _, order := range orders {
+		ids = append(ids, order.Id)
+	}
+
+	req := &pb.UpdateOrdersStatusRequest{
+		OrderIds:  ids,
+		NewStatus: "processing",
+	}
+
+	_, err := g.client.UpdateOrderStatus(ctx, req)
+	return err
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyz")

@@ -15,10 +15,13 @@ type ConsumerApp struct {
 	cfg *config.ConsumerConfig
 	log *zap.SugaredLogger
 
-	rabbitmqClient *rabbitmq.RabbitMqClient
+	orderCreatedRabbitmqClient       *rabbitmq.RabbitMqClient
+	orderStatusChangedRabbitmqClient *rabbitmq.RabbitMqClient
 
-	orderCreatedConsumer         *rabbitmqconsumer.Consumer
-	orderCreatedMessageProcessor dalconsumer.MessageProcessor
+	orderCreatedConsumer               *rabbitmqconsumer.Consumer
+	orderStatusChangedConsumer         *rabbitmqconsumer.Consumer
+	orderCreatedMessageProcessor       dalconsumer.MessageProcessor
+	orderStatusChangedMessageProcessor dalconsumer.MessageProcessor
 
 	omsClient *client.OmsGrpcClient
 }
@@ -38,9 +41,6 @@ func NewConsumerApp() (*ConsumerApp, error) {
 }
 
 func (a *ConsumerApp) Run() error {
-	if err := a.initRabbitMqClient(); err != nil {
-		return err
-	}
 	if err := a.initOmsGrpcClient(); err != nil {
 		return err
 	}
@@ -48,7 +48,14 @@ func (a *ConsumerApp) Run() error {
 	if err := a.initOrderCreatedConsumer(); err != nil {
 		return err
 	}
+	a.initOrderStatusChangedMessageProcessor()
+	if err := a.initOrderStatusChangedConsumer(); err != nil {
+		return err
+	}
 	if err := a.startOrderCreatedConsumer(); err != nil {
+		return err
+	}
+	if err := a.startOrderStatusChangedConsumer(); err != nil {
 		return err
 	}
 
@@ -60,19 +67,12 @@ func (a *ConsumerApp) Stop() {
 	a.log.Infow("app.stopping")
 
 	a.orderCreatedConsumer.Stop()
-	a.rabbitmqClient.Close()
+	a.orderCreatedRabbitmqClient.Close()
+	a.orderStatusChangedConsumer.Stop()
+	a.orderStatusChangedRabbitmqClient.Close()
 	a.omsClient.Close()
 
 	a.log.Infow("app.stopped")
-}
-
-func (a *ConsumerApp) initRabbitMqClient() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderCreatedRabbitMqConsumerSettings.RabbitMqSettings)
-	if err != nil {
-		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
-	}
-	a.rabbitmqClient = rabbitMqClient
-	return nil
 }
 
 func (a *ConsumerApp) initOmsGrpcClient() error {
@@ -89,8 +89,18 @@ func (a *ConsumerApp) initOrderCreatedMessageProcessor() {
 	a.orderCreatedMessageProcessor = consumer.NewOrderCreatedMessageProcessor(a.omsClient, a.log)
 }
 
+func (a *ConsumerApp) initOrderStatusChangedMessageProcessor() {
+	a.orderStatusChangedMessageProcessor = consumer.NewOrderStatusChangedMessageProcessor(a.omsClient, a.log)
+}
+
 func (a *ConsumerApp) initOrderCreatedConsumer() error {
-	orderCreatedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.rabbitmqClient,
+	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderCreatedRabbitMqConsumerSettings.RabbitMqSettings)
+	if err != nil {
+		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
+	}
+	a.orderCreatedRabbitmqClient = rabbitMqClient
+
+	orderCreatedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.orderCreatedRabbitmqClient,
 		a.orderCreatedMessageProcessor, a.log)
 	if err != nil {
 		a.log.Errorw("app.create_order_created_consumer_failed", "err", err)
@@ -99,10 +109,35 @@ func (a *ConsumerApp) initOrderCreatedConsumer() error {
 	return nil
 }
 
+func (a *ConsumerApp) initOrderStatusChangedConsumer() error {
+	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderStatusChangedRabbitMqConsumerSettings.RabbitMqSettings)
+	if err != nil {
+		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
+	}
+	a.orderStatusChangedRabbitmqClient = rabbitMqClient
+
+	orderStatusChangedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderStatusChangedRabbitMqConsumerSettings, a.orderStatusChangedRabbitmqClient,
+		a.orderStatusChangedMessageProcessor, a.log)
+	if err != nil {
+		a.log.Errorw("app.create_order_status_changed_consumer_failed", "err", err)
+	}
+	a.orderStatusChangedConsumer = orderStatusChangedConsumer
+	return nil
+}
+
 func (a *ConsumerApp) startOrderCreatedConsumer() error {
 	go func() {
 		if err := a.orderCreatedConsumer.Start(); err != nil {
 			a.log.Fatalw("app.start_order_created_consumer_failed", "err", err)
+		}
+	}()
+	return nil
+}
+
+func (a *ConsumerApp) startOrderStatusChangedConsumer() error {
+	go func() {
+		if err := a.orderStatusChangedConsumer.Start(); err != nil {
+			a.log.Fatalw("app.start_order_status_changed_consumer_failed", "err", err)
 		}
 	}()
 	return nil

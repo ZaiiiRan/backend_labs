@@ -3,7 +3,7 @@ module github.com/ZaiiiRan/backend_labs/order-generator
 go 1.25.0
 
 require (
-	github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251022040612-b8173d33afcd
+	github.com/ZaiiiRan/backend_labs/order-service v0.0.0-20251226185705-bd67f5aece3d
 	github.com/spf13/viper v1.21.0
 	google.golang.org/grpc v1.76.0
 )
