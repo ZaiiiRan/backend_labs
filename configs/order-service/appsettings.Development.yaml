@@ -25,7 +25,7 @@ OmsPublisherSettings:
     - Queue: public.oms.order.status.changed
       RoutingKeyPattern: order.status.changed
     - Queue: oms.logs
-      RoutingKeyPattern: order.*
+      RoutingKeyPattern: order.#
 
 HttpServerSettings:
   Port: 5000
