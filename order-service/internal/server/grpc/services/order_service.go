@@ -8,7 +8,7 @@ import (
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	bllServices "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/services"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
-	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
+	producer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/producer/kafka"
 	repositories "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/repositories/postgres"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/utils"
@@ -21,16 +21,23 @@ import (
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 
-	log                   *zap.SugaredLogger
-	pgClient              *postgres.PostgresClient
-	omsPublisher *publisher.Publisher
+	log                        *zap.SugaredLogger
+	pgClient                   *postgres.PostgresClient
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
 }
 
-func NewOrderService(pgClient *postgres.PostgresClient, omsPublisher *publisher.Publisher, log *zap.SugaredLogger) *OrderService {
+func NewOrderService(
+	pgClient *postgres.PostgresClient,
+	orderCreatedProducer *producer.Producer,
+	orderStatusChangedProducer *producer.Producer,
+	log *zap.SugaredLogger,
+) *OrderService {
 	return &OrderService{
-		pgClient:              pgClient,
-		omsPublisher: omsPublisher,
-		log:                   log,
+		pgClient:                   pgClient,
+		orderCreatedProducer:       orderCreatedProducer,
+		orderStatusChangedProducer: orderStatusChangedProducer,
+		log:                        log,
 	}
 }
 
@@ -159,7 +166,7 @@ func (s *OrderService) createBllOrderService(log *zap.SugaredLogger) *bllService
 	uow := unitofwork.New(s.pgClient)
 	orderRepo := repositories.NewOrderRepository(uow)
 	orderItemRepo := repositories.NewOrderItemRepository(uow)
-	return bllServices.NewOrderService(uow, orderRepo, orderItemRepo, s.omsPublisher, log)
+	return bllServices.NewOrderService(uow, orderRepo, orderItemRepo, s.orderCreatedProducer, s.orderStatusChangedProducer, log)
 }
 
 func (s *OrderService) createBllAuditLogOrderService(log *zap.SugaredLogger) *bllServices.AuditLogOrderService {

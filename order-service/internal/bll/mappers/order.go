@@ -76,13 +76,13 @@ func BllOrderToPb(o bll.OrderUnit) *pb.Order {
 	}
 }
 
-func BllOrderToOrderCreatedMessage(o bll.OrderUnit) *messages.OrderCreatedMessage {
+func BllOrderToOrderCreatedMessage(o bll.OrderUnit) messages.OrderCreatedMessage {
 	var items []messages.OrderCreatedItemMessage
 	for _, it := range o.OrderItems {
 		items = append(items, BllOrderItemToOrderCreatedItemMessage(it))
 	}
 
-	return &messages.OrderCreatedMessage{
+	return messages.OrderCreatedMessage{
 		Id:              o.ID,
 		CustomerID:      o.CustomerID,
 		DeliveryAddress: o.DeliveryAddress,

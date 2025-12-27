@@ -18,8 +18,6 @@ import (
 type OrderCreatedMessageProcessor struct {
 	client *grpcclient.OmsGrpcClient
 	log    *zap.SugaredLogger
-
-	counter int // experiment
 }
 
 func NewOrderCreatedMessageProcessor(client *grpcclient.OmsGrpcClient, log *zap.SugaredLogger) dalconsumer.MessageProcessor {
@@ -29,15 +27,7 @@ func NewOrderCreatedMessageProcessor(client *grpcclient.OmsGrpcClient, log *zap.
 	}
 }
 
-func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.MessageInfo) (bool, error) {
-	/* experiment */
-	p.counter++
-	if p.counter%5 == 0 {
-		p.log.Errorw("order_created_message_processor.experiment_error", "err", "experiment induced error")
-		return false, fmt.Errorf("experiment induced error")
-	}
-	/* experiment */
-
+func (p *OrderCreatedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.Message) (bool, error) {
 	var orders []messages.OrderCreatedMessage
 	for _, msg := range batch {
 		var o messages.OrderCreatedMessage

@@ -26,7 +26,7 @@ func NewOrderStatusChangedMessageProcessor(client *grpcclient.OmsGrpcClient, log
 	}
 }
 
-func (p *OrderStatusChangedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.MessageInfo) (bool, error) {
+func (p *OrderStatusChangedMessageProcessor) ProcessMessage(ctx context.Context, batch []dalconsumer.Message) (bool, error) {
 	orders := make([]messages.OrderStatusChangedMessage, 0, len(batch))
 	ids := make([]int64, 0, len(batch))
 	for _, msg := range batch {

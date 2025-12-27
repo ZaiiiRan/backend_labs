@@ -3,10 +3,10 @@ module github.com/ZaiiiRan/backend_labs/order-service
 go 1.24.5
 
 require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/pressly/goose/v3 v3.25.0
-	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/spf13/viper v1.21.0
 	github.com/swaggo/http-swagger v1.3.4
 	go.uber.org/zap v1.27.0

@@ -3,13 +3,14 @@ package services
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/bll/mappers"
 	bll "github.com/ZaiiiRan/backend_labs/order-service/internal/bll/models"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/interfaces"
 	dal "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/models"
-	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
+	producer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/producer/kafka"
 	unitofwork "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/unit_of_work/postgres"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/validators"
 	"github.com/ZaiiiRan/backend_labs/order-service/pkg/messages"
@@ -17,26 +18,29 @@ import (
 )
 
 type OrderService struct {
-	uow                   *unitofwork.UnitOfWork
-	orderRepo             interfaces.OrderRepository
-	orderItemRepo         interfaces.OrderItemRepository
-	omsPublisher *publisher.Publisher
-	log                   *zap.SugaredLogger
+	uow                        *unitofwork.UnitOfWork
+	orderRepo                  interfaces.OrderRepository
+	orderItemRepo              interfaces.OrderItemRepository
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
+	log                        *zap.SugaredLogger
 }
 
 func NewOrderService(
 	uow *unitofwork.UnitOfWork,
 	orderRepo interfaces.OrderRepository,
 	orderItemRepo interfaces.OrderItemRepository,
-	omsPublisher *publisher.Publisher,
+	orderCreatedProducer *producer.Producer,
+	orderStatusChangedProducer *producer.Producer,
 	log *zap.SugaredLogger,
 ) *OrderService {
 	return &OrderService{
-		uow:                   uow,
-		orderRepo:             orderRepo,
-		orderItemRepo:         orderItemRepo,
-		omsPublisher: omsPublisher,
-		log:                   log,
+		uow:                        uow,
+		orderRepo:                  orderRepo,
+		orderItemRepo:              orderItemRepo,
+		orderCreatedProducer:       orderCreatedProducer,
+		orderStatusChangedProducer: orderStatusChangedProducer,
+		log:                        log,
 	}
 }
 
@@ -102,16 +106,20 @@ func (s *OrderService) BatchInsert(ctx context.Context, orders []bll.OrderUnit) 
 	}
 
 	go func() {
-		var msgs []messages.Message
+		var msgs []producer.Message
 		for _, o := range result {
-			msgs = append(msgs, mappers.BllOrderToOrderCreatedMessage(o))
+			msg := producer.Message{
+				Key:   strconv.FormatInt(o.CustomerID, 10),
+				Value: mappers.BllOrderToOrderCreatedMessage(o),
+			}
+			msgs = append(msgs, msg)
 		}
 
 		ctxPub, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := s.omsPublisher.PublishBatch(ctxPub, msgs); err != nil {
-			s.log.Errorw("order_service.publish_order_created_messages_failed", "err", err)
+		if err := s.orderCreatedProducer.Produce(ctxPub, msgs); err != nil {
+			s.log.Errorw("order_service.produce_order_created_messages_failed", "err", err)
 		}
 	}()
 
@@ -166,12 +174,15 @@ func (s *OrderService) UpdateOrdersStatus(ctx context.Context, orderIds []int64,
 	}
 
 	go func() {
-		var msgs []messages.Message
+		var msgs []producer.Message
 		for _, o := range orders {
-			msg := &messages.OrderStatusChangedMessage{
-				OrderId:     o.ID,
-				OrderStatus: o.Status.String(),
-				CustomerId:  o.CustomerID,
+			msg := producer.Message{
+				Key: strconv.FormatInt(o.CustomerID, 10),
+				Value: messages.OrderStatusChangedMessage{
+					OrderId:     o.ID,
+					OrderStatus: o.Status.String(),
+					CustomerId:  o.CustomerID,
+				},
 			}
 			msgs = append(msgs, msg)
 		}
@@ -179,8 +190,8 @@ func (s *OrderService) UpdateOrdersStatus(ctx context.Context, orderIds []int64,
 		ctxPub, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := s.omsPublisher.PublishBatch(ctxPub, msgs); err != nil {
-			s.log.Errorw("order_service.publish_order_status_changed_messages_failed", "err", err)
+		if err := s.orderStatusChangedProducer.Produce(ctxPub, msgs); err != nil {
+			s.log.Errorw("order_service.produce_order_status_changed_messages_failed", "err", err)
 		}
 	}()
 

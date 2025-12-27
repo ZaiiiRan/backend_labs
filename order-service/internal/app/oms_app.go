@@ -8,8 +8,8 @@ import (
 
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/postgres"
-	publisher "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/publisher/rabbitmq"
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	kafkaproducer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/producer/kafka"
+	producer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/producer/kafka"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/logger"
 	grpcserver "github.com/ZaiiiRan/backend_labs/order-service/internal/server/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/server/grpc/services"
@@ -23,9 +23,9 @@ type OmsApp struct {
 	log *zap.SugaredLogger
 
 	postgresClient *postgres.PostgresClient
-	rabbitmqClient *rabbitmq.RabbitMqClient
 
-	omsPublisher *publisher.Publisher
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
 
 	orderService *services.OrderService
 
@@ -51,10 +51,7 @@ func (a *OmsApp) Run(ctx context.Context) error {
 	if err := a.initPostgresClient(ctx); err != nil {
 		return err
 	}
-	if err := a.initRabbitMqClient(); err != nil {
-		return err
-	}
-	if err := a.initPublishers(); err != nil {
+	if err := a.initProducers(); err != nil {
 		return err
 	}
 	a.initOrderService()
@@ -77,9 +74,9 @@ func (a *OmsApp) Stop(ctx context.Context) {
 	defer cancel()
 
 	a.postgresClient.Close()
-	a.omsPublisher.Close()
-	a.rabbitmqClient.Close()
-	
+	a.orderCreatedProducer.Close()
+	a.orderStatusChangedProducer.Close()
+
 	a.grpcServer.Stop(shCtx)
 	a.grpcGateway.Stop(shCtx)
 
@@ -96,27 +93,25 @@ func (a *OmsApp) initPostgresClient(ctx context.Context) error {
 	return nil
 }
 
-func (a *OmsApp) initRabbitMqClient() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OmsRabbitMqPublisherSettings.RabbitMqSettings)
+func (a *OmsApp) initProducers() error {
+	orderCreatedProducer, err := kafkaproducer.NewKafkaProducer(&a.cfg.OmsKafkaProducerSettings, a.cfg.OmsKafkaProducerSettings.OrderCreatedTopic)
 	if err != nil {
-		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
-	}
-	a.rabbitmqClient = rabbitMqClient
-	return nil
-}
-
-func (a *OmsApp) initPublishers() error {
-	orderCreatedPublisher, err := publisher.NewPublisher(&a.cfg.OmsRabbitMqPublisherSettings, a.rabbitmqClient)
-	if err != nil {
-		a.log.Errorw("app.create_order_created_publisher_failed", "err", err)
+		a.log.Errorw("app.kafka_order_created_producer_init_failed", "err", err)
 		return err
 	}
-	a.omsPublisher = orderCreatedPublisher
+	a.orderCreatedProducer = orderCreatedProducer
+
+	orderStatusChangedProducer, err := kafkaproducer.NewKafkaProducer(&a.cfg.OmsKafkaProducerSettings, a.cfg.OmsKafkaProducerSettings.OrderStatusChangedTopic)
+	if err != nil {
+		a.log.Errorw("app.kafka_order_status_changed_producer_init_failed", "err", err)
+		return err
+	}
+	a.orderStatusChangedProducer = orderStatusChangedProducer
 	return nil
 }
 
 func (a *OmsApp) initOrderService() {
-	a.orderService = services.NewOrderService(a.postgresClient, a.omsPublisher, a.log)
+	a.orderService = services.NewOrderService(a.postgresClient, a.orderCreatedProducer, a.orderStatusChangedProducer, a.log)
 }
 
 func (a *OmsApp) initGrpcServer() error {
