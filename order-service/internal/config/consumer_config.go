@@ -43,4 +43,6 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 }
 
 func setDefaultConsumerConfigValues(v *viper.Viper) {
+	v.SetDefault("KafkaConsumerSettings.BatchSize", 100)
+	v.SetDefault("KafkaConsumerSettings.BatchTimeoutMs", 5)
 }

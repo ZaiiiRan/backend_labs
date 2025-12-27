@@ -4,6 +4,8 @@ KafkaConsumerSettings:
   GroupId: universe-labs-oms-consumer
   OrderCreatedTopic: oms_order_created
   OrderStatusChangedTopic: oms_order_status_changed
+  BatchSize: 100
+  BatchTimeoutMs: 5
 
 OmsGrpcClient:
   Address: order-service:50051
