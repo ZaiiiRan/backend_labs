@@ -105,23 +105,23 @@ services:
       - backend-labs-network
     restart: unless-stopped
 
-  # order-consumer:
-  #   build:
-  #     context: ./order-service
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     order-service:
-  #       condition: service_started
-  #   environment:
-  #     APP_ENVIRONMENT: "Development"
-  #   entrypoint: ["./consumer"]
-  #   deploy:
-  #     replicas: 5
-  #   volumes:
-  #     - ./configs/order-service-consumer:/etc/order-service-consumer
-  #   networks:
-  #     - backend-labs-network
-  #   restart: unless-stopped
+  order-consumer:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    depends_on:
+      order-service:
+        condition: service_started
+    environment:
+      APP_ENVIRONMENT: "Development"
+    entrypoint: ["./consumer"]
+    deploy:
+      replicas: 5
+    volumes:
+      - ./configs/order-service-consumer:/etc/order-service-consumer
+    networks:
+      - backend-labs-network
+    restart: unless-stopped
 
 networks:
   backend-labs-network:

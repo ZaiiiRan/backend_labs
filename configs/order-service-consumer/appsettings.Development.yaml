@@ -1,30 +1,9 @@
-OrderCreatedConsumerSettings:
-  RabbitMqSettings:
-    Host: order-rabbitmq
-    Port: 5672
-    User: user
-    Password: mypassword
-  Queue: oms.order.created
-  BatchSize: 100
-  BatchTimeoutSeconds: 1
-  DeadLetterSettings:
-    Dlx: oms.order.dlx
-    Dlq: oms.order.created.dlq
-    RoutingKey: order.created
-
-OrderStatusChangedConsumerSettings:
-  RabbitMqSettings:
-    Host: order-rabbitmq
-    Port: 5672
-    User: user
-    Password: mypassword
-  Queue: oms.order.status.changed
-  BatchSize: 100
-  BatchTimeoutSeconds: 1
-  DeadLetterSettings:
-    Dlx: oms.order.dlx
-    Dlq: oms.order.status.changed.dlq
-    RoutingKey: order.status.changed
+KafkaConsumerSettings:
+  KafkaSettings:
+    BootstrapServers: order-kafka:29092
+  GroupId: universe-labs-oms-consumer
+  OrderCreatedTopic: oms_order_created
+  OrderStatusChangedTopic: oms_order_status_changed
 
 OmsGrpcClient:
   Address: order-service:50051

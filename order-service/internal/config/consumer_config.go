@@ -9,9 +9,8 @@ import (
 )
 
 type ConsumerConfig struct {
-	OrderCreatedRabbitMqConsumerSettings       settings.RabbitMqConsumerSettings `mapstructure:"OrderCreatedConsumerSettings"`
-	OrderStatusChangedRabbitMqConsumerSettings settings.RabbitMqConsumerSettings `mapstructure:"OrderStatusChangedConsumerSettings"`
-	OmsClientGrpcSettings                      settings.GrpcClientSettings       `mapstructure:"OmsGrpcClient"`
+	KafkaConsumerSettings settings.KafkaConsumerSettings `mapstructure:"KafkaConsumerSettings"`
+	OmsClientGrpcSettings settings.GrpcClientSettings    `mapstructure:"OmsGrpcClient"`
 }
 
 func LoadConsumerConfig() (*ConsumerConfig, error) {
@@ -44,15 +43,4 @@ func LoadConsumerConfig() (*ConsumerConfig, error) {
 }
 
 func setDefaultConsumerConfigValues(v *viper.Viper) {
-	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.HeartbeatSeconds", 30)
-	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
-	v.SetDefault("OrderCreatedConsumerSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
-	v.SetDefault("OrderCreatedConsumerSettings.BatchSize", 100)
-	v.SetDefault("OrderCreatedConsumerSettings.BatchTimeoutSeconds", 1)
-	
-	v.SetDefault("OrderStatusChangedConsumerSettings.RabbitMqSettings.HeartbeatSeconds", 30)
-	v.SetDefault("OrderStatusChangedConsumerSettings.RabbitMqSettings.MaxReconnectAttempts", 3)
-	v.SetDefault("OrderStatusChangedConsumerSettings.RabbitMqSettings.ReconnectTimeoutSeconds", 5)
-	v.SetDefault("OrderStatusChangedConsumerSettings.BatchSize", 100)
-	v.SetDefault("OrderStatusChangedConsumerSettings.BatchTimeoutSeconds", 1)
 }

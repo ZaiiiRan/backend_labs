@@ -65,7 +65,7 @@ func (p *Producer) init() error {
 	p.once.Do(func() {
 		p.producer, err = kafka.NewProducer(&kafka.ConfigMap{
 			"bootstrap.servers": p.cfg.KafkaSettings.BootstrapServers,
-			"client.id":         p.cfg.KafkaSettings.ClientId,
+			"client.id":         p.cfg.ClientId,
 			"linger.ms":         100,
 			"compression.type":  "snappy",
 			"partitioner":       "consistent",

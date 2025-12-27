@@ -1,12 +1,13 @@
 package app
 
 import (
+	"context"
+
 	client "github.com/ZaiiiRan/backend_labs/order-service/internal/client/grpc"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/config"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/consumer"
 	dalconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer"
-	rabbitmqconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer/rabbitmq"
-	"github.com/ZaiiiRan/backend_labs/order-service/internal/dal/rabbitmq"
+	kafkaconsumer "github.com/ZaiiiRan/backend_labs/order-service/internal/dal/consumer/kafka"
 	"github.com/ZaiiiRan/backend_labs/order-service/internal/logger"
 	"go.uber.org/zap"
 )
@@ -15,11 +16,9 @@ type ConsumerApp struct {
 	cfg *config.ConsumerConfig
 	log *zap.SugaredLogger
 
-	orderCreatedRabbitmqClient       *rabbitmq.RabbitMqClient
-	orderStatusChangedRabbitmqClient *rabbitmq.RabbitMqClient
+	orderCreatedConsumer       *kafkaconsumer.Consumer
+	orderStatusChangedConsumer *kafkaconsumer.Consumer
 
-	orderCreatedConsumer               *rabbitmqconsumer.Consumer
-	orderStatusChangedConsumer         *rabbitmqconsumer.Consumer
 	orderCreatedMessageProcessor       dalconsumer.MessageProcessor
 	orderStatusChangedMessageProcessor dalconsumer.MessageProcessor
 
@@ -40,7 +39,7 @@ func NewConsumerApp() (*ConsumerApp, error) {
 	return &ConsumerApp{cfg: cfg, log: log}, nil
 }
 
-func (a *ConsumerApp) Run() error {
+func (a *ConsumerApp) Run(ctx context.Context) error {
 	if err := a.initOmsGrpcClient(); err != nil {
 		return err
 	}
@@ -52,10 +51,10 @@ func (a *ConsumerApp) Run() error {
 	if err := a.initOrderStatusChangedConsumer(); err != nil {
 		return err
 	}
-	if err := a.startOrderCreatedConsumer(); err != nil {
+	if err := a.startOrderCreatedConsumer(ctx); err != nil {
 		return err
 	}
-	if err := a.startOrderStatusChangedConsumer(); err != nil {
+	if err := a.startOrderStatusChangedConsumer(ctx); err != nil {
 		return err
 	}
 
@@ -66,10 +65,9 @@ func (a *ConsumerApp) Run() error {
 func (a *ConsumerApp) Stop() {
 	a.log.Infow("app.stopping")
 
-	a.orderCreatedConsumer.Stop()
-	a.orderCreatedRabbitmqClient.Close()
-	a.orderStatusChangedConsumer.Stop()
-	a.orderStatusChangedRabbitmqClient.Close()
+	a.orderCreatedConsumer.Close()
+	a.orderStatusChangedConsumer.Close()
+
 	a.omsClient.Close()
 
 	a.log.Infow("app.stopped")
@@ -94,49 +92,41 @@ func (a *ConsumerApp) initOrderStatusChangedMessageProcessor() {
 }
 
 func (a *ConsumerApp) initOrderCreatedConsumer() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderCreatedRabbitMqConsumerSettings.RabbitMqSettings)
+	orderCreatedConsumer, err := kafkaconsumer.NewConsumer(
+		&a.cfg.KafkaConsumerSettings, a.cfg.KafkaConsumerSettings.OrderCreatedTopic, a.orderCreatedMessageProcessor, a.log,
+	)
 	if err != nil {
-		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
-	}
-	a.orderCreatedRabbitmqClient = rabbitMqClient
-
-	orderCreatedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderCreatedRabbitMqConsumerSettings, a.orderCreatedRabbitmqClient,
-		a.orderCreatedMessageProcessor, a.log)
-	if err != nil {
-		a.log.Errorw("app.create_order_created_consumer_failed", "err", err)
+		a.log.Errorw("app.init_order_created_consumer_failed", "err", err)
+		return err
 	}
 	a.orderCreatedConsumer = orderCreatedConsumer
 	return nil
 }
 
 func (a *ConsumerApp) initOrderStatusChangedConsumer() error {
-	rabbitMqClient, err := rabbitmq.NewRabbitMqClient(&a.cfg.OrderStatusChangedRabbitMqConsumerSettings.RabbitMqSettings)
+	orderStatusChanged, err := kafkaconsumer.NewConsumer(
+		&a.cfg.KafkaConsumerSettings, a.cfg.KafkaConsumerSettings.OrderStatusChangedTopic, a.orderStatusChangedMessageProcessor, a.log,
+	)
 	if err != nil {
-		a.log.Errorw("app.rabbitmq_connect_failed", "err", err)
+		a.log.Errorw("app.init_order_status_changed_consumer_failed", "err", err)
+		return err
 	}
-	a.orderStatusChangedRabbitmqClient = rabbitMqClient
-
-	orderStatusChangedConsumer, err := rabbitmqconsumer.NewConsumer(&a.cfg.OrderStatusChangedRabbitMqConsumerSettings, a.orderStatusChangedRabbitmqClient,
-		a.orderStatusChangedMessageProcessor, a.log)
-	if err != nil {
-		a.log.Errorw("app.create_order_status_changed_consumer_failed", "err", err)
-	}
-	a.orderStatusChangedConsumer = orderStatusChangedConsumer
+	a.orderStatusChangedConsumer = orderStatusChanged
 	return nil
 }
 
-func (a *ConsumerApp) startOrderCreatedConsumer() error {
+func (a *ConsumerApp) startOrderCreatedConsumer(ctx context.Context) error {
 	go func() {
-		if err := a.orderCreatedConsumer.Start(); err != nil {
+		if err := a.orderCreatedConsumer.Run(ctx); err != nil {
 			a.log.Fatalw("app.start_order_created_consumer_failed", "err", err)
 		}
 	}()
 	return nil
 }
 
-func (a *ConsumerApp) startOrderStatusChangedConsumer() error {
+func (a *ConsumerApp) startOrderStatusChangedConsumer(ctx context.Context) error {
 	go func() {
-		if err := a.orderStatusChangedConsumer.Start(); err != nil {
+		if err := a.orderStatusChangedConsumer.Run(ctx); err != nil {
 			a.log.Fatalw("app.start_order_status_changed_consumer_failed", "err", err)
 		}
 	}()

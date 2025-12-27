@@ -1,8 +1,8 @@
 package settings
 
-type KafkaProducerSettings struct {
+type KafkaConsumerSettings struct {
 	KafkaSettings           KafkaSettings `mapstructure:"KafkaSettings"`
-	ClientId                string        `mapstructure:"ClientId"`
+	GroupId                 string        `mapstructure:"GroupId"`
 	OrderCreatedTopic       string        `mapstructure:"OrderCreatedTopic"`
 	OrderStatusChangedTopic string        `mapstructure:"OrderStatusChangedTopic"`
 }

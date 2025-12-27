@@ -5,7 +5,7 @@ DbSettings:
 OmsProducerSettings:
   KafkaSettings:
     BootstrapServers: order-kafka:29092
-    ClientId: universe-labs-oms
+  ClientId: universe-labs-oms
   OrderCreatedTopic: oms_order_created
   OrderStatusChangedTopic: oms_order_status_changed
 
