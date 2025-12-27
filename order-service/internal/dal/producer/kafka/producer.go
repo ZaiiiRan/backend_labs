@@ -14,13 +14,17 @@ type Producer struct {
 	producer *kafka.Producer
 	once     sync.Once
 	cfg      *config.KafkaProducerSettings
+	topic    string
 }
 
-func NewKafkaProducer(cfg *config.KafkaProducerSettings) (*Producer, error) {
-	return &Producer{cfg: cfg}, nil
+func NewKafkaProducer(cfg *config.KafkaProducerSettings, topic string) (*Producer, error) {
+	return &Producer{
+		cfg:   cfg,
+		topic: topic,
+	}, nil
 }
 
-func (p *Producer) Produce(ctx context.Context, topic string, messages []Message) error {
+func (p *Producer) Produce(ctx context.Context, messages []Message) error {
 	if len(messages) == 0 {
 		return nil
 	}
@@ -37,7 +41,7 @@ func (p *Producer) Produce(ctx context.Context, topic string, messages []Message
 
 		err = p.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{
-				Topic:     &topic,
+				Topic:     &p.topic,
 				Partition: kafka.PartitionAny,
 			},
 			Key:   []byte(msg.Key),

@@ -24,9 +24,8 @@ type OmsApp struct {
 
 	postgresClient *postgres.PostgresClient
 
-	producer                   *producer.Producer
-	orderCreatedProducer       *producer.OrderCreatedProducer
-	orderStatusChangedProducer *producer.OrderStatusChangedProducer
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
 
 	orderService *services.OrderService
 
@@ -75,7 +74,8 @@ func (a *OmsApp) Stop(ctx context.Context) {
 	defer cancel()
 
 	a.postgresClient.Close()
-	a.producer.Close()
+	a.orderCreatedProducer.Close()
+	a.orderStatusChangedProducer.Close()
 
 	a.grpcServer.Stop(shCtx)
 	a.grpcGateway.Stop(shCtx)
@@ -94,15 +94,19 @@ func (a *OmsApp) initPostgresClient(ctx context.Context) error {
 }
 
 func (a *OmsApp) initProducers() error {
-	producer, err := kafkaproducer.NewKafkaProducer(&a.cfg.OmsKafkaProducerSettings)
+	orderCreatedProducer, err := kafkaproducer.NewKafkaProducer(&a.cfg.OmsKafkaProducerSettings, a.cfg.OmsKafkaProducerSettings.OrderCreatedTopic)
 	if err != nil {
-		a.log.Errorw("app.kafka_producer_init_failed", "err", err)
+		a.log.Errorw("app.kafka_order_created_producer_init_failed", "err", err)
 		return err
 	}
-	a.producer = producer
+	a.orderCreatedProducer = orderCreatedProducer
 
-	a.orderCreatedProducer = kafkaproducer.NewOrderCreatedProducer(&a.cfg.OmsKafkaProducerSettings, producer)
-	a.orderStatusChangedProducer = kafkaproducer.NewOrderStatusChangedProducer(&a.cfg.OmsKafkaProducerSettings, producer)
+	orderStatusChangedProducer, err := kafkaproducer.NewKafkaProducer(&a.cfg.OmsKafkaProducerSettings, a.cfg.OmsKafkaProducerSettings.OrderStatusChangedTopic)
+	if err != nil {
+		a.log.Errorw("app.kafka_order_status_changed_producer_init_failed", "err", err)
+		return err
+	}
+	a.orderStatusChangedProducer = orderStatusChangedProducer
 	return nil
 }
 

@@ -23,14 +23,14 @@ type OrderService struct {
 
 	log                        *zap.SugaredLogger
 	pgClient                   *postgres.PostgresClient
-	orderCreatedProducer       *producer.OrderCreatedProducer
-	orderStatusChangedProducer *producer.OrderStatusChangedProducer
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
 }
 
 func NewOrderService(
 	pgClient *postgres.PostgresClient,
-	orderCreatedProducer *producer.OrderCreatedProducer,
-	orderStatusChangedProducer *producer.OrderStatusChangedProducer,
+	orderCreatedProducer *producer.Producer,
+	orderStatusChangedProducer *producer.Producer,
 	log *zap.SugaredLogger,
 ) *OrderService {
 	return &OrderService{

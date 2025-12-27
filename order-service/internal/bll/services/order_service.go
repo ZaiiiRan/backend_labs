@@ -21,8 +21,8 @@ type OrderService struct {
 	uow                        *unitofwork.UnitOfWork
 	orderRepo                  interfaces.OrderRepository
 	orderItemRepo              interfaces.OrderItemRepository
-	orderCreatedProducer       *producer.OrderCreatedProducer
-	orderStatusChangedProducer *producer.OrderStatusChangedProducer
+	orderCreatedProducer       *producer.Producer
+	orderStatusChangedProducer *producer.Producer
 	log                        *zap.SugaredLogger
 }
 
@@ -30,8 +30,8 @@ func NewOrderService(
 	uow *unitofwork.UnitOfWork,
 	orderRepo interfaces.OrderRepository,
 	orderItemRepo interfaces.OrderItemRepository,
-	orderCreatedProducer *producer.OrderCreatedProducer,
-	orderStatusChangedProducer *producer.OrderStatusChangedProducer,
+	orderCreatedProducer *producer.Producer,
+	orderStatusChangedProducer *producer.Producer,
 	log *zap.SugaredLogger,
 ) *OrderService {
 	return &OrderService{
